@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Reaction Test</title>
+<style>
+/* Sayfa genel stil ayarları */
+body {
+  font-family: Inter, system-ui;
+  background: radial-gradient(circle at 40% 40%, #0f172a, #020817);
+  color: #e6eef8;
+  display:flex; align-items:center; justify-content:center;
+  height:100vh; margin:0;
+  flex-direction:column;
+}
+
+/* Tıklanabilir kutunun temel görünümü */
+.box {
+  width:300px; height:300px;
+  border-radius:14px;
+  background:#1e293b;
+  display:flex; align-items:center; justify-content:center;
+  font-size:20px; font-weight:600;
+  cursor:pointer;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+  user-select:none;
+  transition: background 0.2s;
+}
+
+/* Hazırlık aşamasında kutu kırmızı olur */
+.box.ready { background:#ef4444; }
+
+/* Tıklama zamanı geldiğinde kutu yeşil olur */
+.box.go { background:#22c55e; color:#04110f; }
+
+/* Bilgilendirici metinler */
+p { margin-top:12px; color:#bcd6f0; font-size:14px; text-align:center; }
+
+/* Ana menü bağlantısı */
+a { color:#38bdf8; margin-top:20px; text-decoration:none; font-size:14px; }
+</style>
+</head>
+<body>
+  <!-- Tıklanabilir kutu -->
+  <div class="box" id="box">Hazırsan tıkla!</div>
+
+  <!-- Bilgilendirici mesajlar -->
+  <p id="msg">Kırmızı olunca bekle, yeşil olunca hemen tıkla.</p>
+  <p id="timer"></p>
+
+  <!-- Ana menüye dönüş bağlantısı -->
+  <a href="index.html">← Ana Menü</a>
+
+  <script>
+    const box = document.getElementById('box');
+    const msg = document.getElementById('msg');
+    const timerDisplay = document.getElementById('timer');
+    let startTime, timeout, interval, timeLimit;
+
+    // Oyunu sıfırlayan fonksiyon
+    function reset() {
+      clearTimeout(timeout);
+      clearInterval(interval);
+      box.className = 'box';
+      box.textContent = 'Hazırsan tıkla!';
+      msg.textContent = 'Kırmızı olunca bekle, yeşil olunca hemen tıkla.';
+      timerDisplay.textContent = '';
+    }
+
+    // Kutunun tıklanma olayları
+    box.onclick = () => {
+      // Kırmızı aşamada tıklarsa: erken tıklama
+      if (box.classList.contains('ready')) {
+        clearTimeout(timeout);
+        clearInterval(interval);
+        box.className = 'box';
+        box.textContent = 'Erken bastın 😅';
+        msg.textContent = 'Tekrar dene.';
+        timerDisplay.textContent = '';
+        return;
+      }
+
+      // Yeşil aşamada tıklarsa: tepki süresi hesaplanır.
+      if (box.classList.contains('go')) {
+        const reaction = (performance.now() - startTime).toFixed(0);
+        clearTimeout(timeLimit);
+        clearInterval(interval);
+        box.className = 'box';
+        box.textContent = `${reaction} ms`;
+        msg.textContent = 'Harika refleks! Bravo sana 👏';
+        timerDisplay.textContent = '';
+        return;
+      }
+
+      // Oyunu başlatma: kutu kırmızıya döner.
+      box.classList.add('ready');
+      box.textContent = 'Hazır ol...';
+      msg.textContent = 'Yeşil olunca hemen tıkla!';
+      timerDisplay.textContent = '';
+
+      // Rastgele süre sonra kutu yeşil olur.
+      timeout = setTimeout(() => {
+        box.className = 'box go';
+        box.textContent = 'Şimdi!';
+        msg.textContent = 'Hemen tıkla! Süre işliyor... Vakit bitiyorrr !';
+        startTime = performance.now();
+
+        // Süre göstergesi başlar
+        interval = setInterval(() => {
+          let elapsed = (performance.now() - startTime) / 1000;
+          timerDisplay.textContent = `Geçen süre: ${elapsed.toFixed(1)} sn`;
+        }, 100);
+
+        // 15 saniye içinde tıklanmazsa süre dolmuş olur
+        timeLimit = setTimeout(() => {
+          clearInterval(interval);
+          box.className = 'box';
+          box.textContent = '⏰ Süre doldu! bir daha dene !';
+          msg.textContent = '15 saniye geçti, tekrar dene.';
+          timerDisplay.textContent = '';
+        }, 15000);
+      }, Math.random() * 3000 + 1000); // 1-4 saniye arası rastgele bekleme
+    };
+
+    // Boşluk tuşuna basınca oyunu sıfırlar
+    document.addEventListener('keydown', e => { if(e.code==='Space') reset(); });
+  </script>
+</body>
+</html>

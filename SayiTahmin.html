@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<title>Sayı Tahmin Oyunu</title>
+<style>
+body {
+  background: radial-gradient(circle at 40% 40%, #0f172a, #020617);
+  color: #e2e8f0;
+  font-family: 'Inter', sans-serif;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  margin: 0;
+}
+h1 {
+  font-size: 2rem;
+  color: #38bdf8;
+  margin-bottom: 20px;
+}
+input, button {
+  padding: 10px 15px;
+  font-size: 16px;
+  border: none;
+  border-radius: 8px;
+  margin: 5px;
+  outline: none;
+}
+input {
+  width: 180px;
+  text-align: center;
+}
+button {
+  background: #10b981;
+  color: white;
+  cursor: pointer;
+  transition: 0.2s;
+}
+button:hover {
+  background: #059669;
+}
+p {
+  margin-top: 15px;
+  font-size: 18px;
+}
+a {
+  color: #38bdf8;
+  margin-top: 25px;
+  text-decoration: none;
+  font-size: 15px;
+}
+a:hover {
+  text-decoration: underline;
+}
+</style>
+</head>
+<body>
+  <h1>Sayı Tahmin Et 🎲</h1>
+  <input type="number" id="guess" placeholder="1 - 100 arası sayı" />
+  <button id="check">Tahmin Et</button>
+  <p id="msg">Bilgisayar bir sayı tuttu!</p>
+  <a href="index.html">← Ana Menü</a>
+
+  <script>
+    let secret = Math.floor(Math.random() * 100) + 1;
+    const msg = document.getElementById('msg');
+    const btn = document.getElementById('check');
+    const input = document.getElementById('guess');
+
+
+    btn.onclick = () => {
+      const val = parseInt(input.value);
+      if (!val || val < 1 || val > 100) {
+        msg.textContent = "⚠️ 1 ile 100 arasında bir sayı gir!";
+        return;
+      }
+      if (val === secret) {
+        msg.textContent = `🎉 Doğru bildin! Sayı: ${secret}`;
+        btn.textContent = "Tekrar Oyna";
+        btn.onclick = () => location.reload();
+      } else if (val < secret) {
+        msg.textContent = "🔼 Daha büyük bir sayı dene!";
+      } else {
+        msg.textContent = "🔽 Daha küçük bir sayı dene!";
+      }
+    };
+  </script>
+</body>
+</html>

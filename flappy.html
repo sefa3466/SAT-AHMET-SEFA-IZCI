@@ -1,0 +1,264 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Flappy Rocket</title>
+<style>
+body {
+  background: radial-gradient(circle at 50% 30%, #1e3a8a 0%, #020617 100%);
+  display:flex; align-items:center; justify-content:center;
+  height:100vh; margin:0; flex-direction:column;
+  font-family:Inter,system-ui; color:#e6eef8; overflow:hidden;
+}
+canvas {
+  background: linear-gradient(180deg, #061b2f 0%, #0a253f 100%);
+  border-radius:18px;
+  box-shadow:0 8px 40px rgba(0,0,0,0.6);
+}
+p { margin-top:10px; color:#bcd6f0; font-size:14px; }
+a { color:#38bdf8; text-decoration:none; margin-top:10px; }
+</style>
+</head>
+<body>
+<canvas id="game" width="360" height="480"></canvas>
+<p>Uzayın derinliklerinde küçük bir roketle engellerden kaçmaya hazır mısın?</p>
+<p>Boşluk tuşuna basarak roketini yukarı it, düşmeden yeşil geçitlerin arasından geç.</p>
+<p>Ne kadar uzun süre dayanırsan, o kadar çok puan kazanırsın!</p>
+<p>Rekorunu kırdığında konfeti patlamasını izle 🎉</p>
+<a href="index.html">← Ana Menü</a>
+
+<script>
+const c = document.getElementById('game');
+const ctx = c.getContext('2d');
+
+// Oyun değişkenleri
+let rocket = { x:80, y:240, vy:0, size:12 };
+let pipes = [];
+let score = 0, best = 0;
+let gravity = 0.12, jump = -3.6, gameOver = false, frame = 0;
+let pipeSpeed = 1.3;
+let startTime = 0, elapsed = 0;
+let started = false, countdown = 3;
+let confetti = [];
+let stars = Array.from({length:25},()=>({x:Math.random()*360,y:Math.random()*480,s:Math.random()*1.5}));
+let recordBroken = false; // rekor sadece bir kez patlayacak
+
+function spawnConfetti() {
+  for (let i=0; i<80; i++) {
+    confetti.push({
+      x: Math.random()*c.width,
+      y: Math.random()*c.height/2,
+      r: Math.random()*3+2,
+      c: `hsl(${Math.random()*360},90%,60%)`,
+      vy: Math.random()*3+2,
+      vx: (Math.random()-0.5)*2,
+      rot: Math.random()*360
+    });
+  }
+}
+
+function drawConfetti() {
+  confetti.forEach(cf => {
+    ctx.save();
+    ctx.translate(cf.x, cf.y);
+    ctx.rotate(cf.rot*Math.PI/180);
+    ctx.fillStyle = cf.c;
+    ctx.fillRect(-cf.r/2, -cf.r/2, cf.r, cf.r);
+    ctx.restore();
+    cf.y += cf.vy;
+    cf.x += cf.vx;
+    cf.rot += 10;
+  });
+  confetti = confetti.filter(cf => cf.y < c.height + 10);
+}
+
+function reset(){
+  rocket = { x:80, y:240, vy:0, size:12 };
+  pipes = [];
+  score = 0;
+  gameOver = false;
+  frame = 0;
+  started = false;
+  countdown = 3;
+  recordBroken = false;
+  setTimeout(()=>startCountdown(),100);
+}
+
+function startCountdown(){
+  countdown = 3;
+  const tick = setInterval(()=>{
+    countdown--;
+    if (countdown <= 0){
+      clearInterval(tick);
+      started = true;
+      startTime = Date.now();
+      update();
+    }
+  },1000);
+  drawCountdown();
+}
+
+function drawCountdown(){
+  drawBackground();
+  ctx.fillStyle = '#fff';
+  ctx.font = '48px Inter';
+  ctx.textAlign = 'center';
+  ctx.fillText(countdown, c.width/2, c.height/2);
+  if (countdown>0) setTimeout(drawCountdown, 1000);
+}
+
+function drawBackground(){
+  const grad = ctx.createLinearGradient(0,0,0,c.height);
+  grad.addColorStop(0,'#03142c');
+  grad.addColorStop(1,'#06223f');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0,0,c.width,c.height);
+
+  for (let s of stars) {
+    ctx.fillStyle = 'rgba(255,255,255,0.7)';
+    ctx.beginPath();
+    ctx.arc(s.x, s.y, s.s, 0, Math.PI*2);
+    ctx.fill();
+    s.y += 0.2;
+    if (s.y > c.height) {
+      s.y = -2;
+      s.x = Math.random() * c.width;
+    }
+  }
+}
+
+function drawRocket(){
+  // Gövde
+  ctx.save();
+  ctx.translate(rocket.x, rocket.y);
+  ctx.rotate(rocket.vy/10);
+  const grd = ctx.createLinearGradient(-6,-12,6,12);
+  grd.addColorStop(0,'#60a5fa');
+  grd.addColorStop(1,'#2563eb');
+  ctx.fillStyle = grd;
+  ctx.beginPath();
+  ctx.moveTo(0, -rocket.size);
+  ctx.lineTo(rocket.size, rocket.size);
+  ctx.lineTo(-rocket.size, rocket.size);
+  ctx.closePath();
+  ctx.fill();
+
+  // Alev efekti
+  const flame = ctx.createLinearGradient(0,rocket.size,0,rocket.size+10);
+  flame.addColorStop(0,'#fbbf24');
+  flame.addColorStop(1,'rgba(249,115,22,0)');
+  ctx.fillStyle = flame;
+  ctx.beginPath();
+  ctx.moveTo(0, rocket.size);
+  ctx.lineTo(4, rocket.size+10);
+  ctx.lineTo(-4, rocket.size+10);
+  ctx.closePath();
+  ctx.fill();
+
+  ctx.restore();
+}
+
+function draw(){
+  drawBackground();
+
+  // Borular
+  for (let p of pipes){
+    const pipeGrad = ctx.createLinearGradient(p.x, 0, p.x, c.height);
+    pipeGrad.addColorStop(0, '#16a34a');
+    pipeGrad.addColorStop(1, '#4ade80');
+    ctx.fillStyle = pipeGrad;
+    ctx.shadowColor = '#22c55e';
+    ctx.shadowBlur = 8;
+    ctx.fillRect(p.x, 0, 30, p.top);
+    ctx.fillRect(p.x, p.top + p.gap, 30, c.height - p.top - p.gap);
+    ctx.shadowBlur = 0;
+  }
+
+  drawRocket();
+
+  // Üst bilgi (skor, süre, rekor)
+  elapsed = started ? Math.floor((Date.now() - startTime) / 1000) : 0;
+  ctx.fillStyle = '#e6eef8';
+  ctx.font = '16px Inter';
+  ctx.textAlign = 'left';
+  ctx.fillText(`Skor: ${score}`, 10, 22);
+  ctx.fillText(`En İyi: ${best}`, 130, 22);
+  ctx.fillText(`Süre: ${elapsed}s`, 270, 22);
+
+  drawConfetti();
+}
+
+function update(){
+  if (gameOver || !started) return;
+  frame++;
+
+  // İlk birkaç saniye daha yavaş düşsün
+  let currentGravity = (elapsed < 3) ? gravity * 0.5   : gravity;
+
+  rocket.vy += currentGravity;
+  rocket.y += rocket.vy;
+
+  // Engeller daha seyrek ve arası geniş
+  if (frame % 160 === 0) {
+    const top = Math.random() * 140 + 60;
+    pipes.push({ x: c.width, top, gap: 200 });
+  }
+
+  for (let p of pipes) p.x -= pipeSpeed;
+
+  if (pipes.length && pipes[0].x + 30 < 0) {
+    pipes.shift();
+    score++;
+
+    // Rekor bir kez kırıldığında sadece 1 kere konfeti patlasın
+    if (score > best && !recordBroken) {
+      best = score;
+      recordBroken = true;
+      spawnConfetti();
+    }
+  }
+
+  for (let p of pipes) {
+    if (
+      rocket.x + rocket.size > p.x &&
+      rocket.x - rocket.size < p.x + 30 &&
+      (rocket.y - rocket.size < p.top || rocket.y + rocket.size > p.top + p.gap)
+    ) {
+      gameOver = true;
+    }
+  }
+
+  if (rocket.y + rocket.size > c.height) gameOver = true;
+
+  draw();
+
+  if (!gameOver) requestAnimationFrame(update);
+  else {
+    ctx.fillStyle = 'rgba(0,0,0,0.5)';
+    ctx.fillRect(0,0,c.width,c.height);
+    ctx.fillStyle = '#fff';
+    ctx.textAlign = 'center';
+    ctx.font = '26px Inter';
+    ctx.fillText('Oyun Bitti', c.width/2, 220);
+    ctx.font = '18px Inter';
+    ctx.fillText(`Skor: ${score} | En İyi: ${best}`, c.width/2, 255);
+    ctx.fillText(`Süre: ${elapsed} saniye`, c.width/2, 280);
+    ctx.fillText('Yeniden başlamak için tıkla', c.width/2, 310);
+  }
+}
+
+function flap(){
+  if (!started) return;
+  if (gameOver){ reset(); return; }
+  rocket.vy = jump;
+}
+
+document.addEventListener('keydown', e => { if (e.code === 'Space') flap(); });
+c.addEventListener('mousedown', flap);
+
+reset();
+startCountdown();
+</script>
+</body>
+</html>

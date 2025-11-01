@@ -1,0 +1,292 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Blackjack - Geniş Masa ve Ortada Kartlar</title>
+<style>
+:root{
+  --table-bg:#0a1a27;
+  --card:#fff;
+  --accent:#ffd166;
+}
+*{box-sizing:border-box;font-family:Inter,Arial,system-ui}
+html,body{
+  height:100%;margin:0;
+  background:radial-gradient(circle at center,#122f4d,#050a12);
+  color:#fff;display:flex;align-items:center;justify-content:center;flex-direction:column;
+}
+.wrap{
+  width:1000px;max-width:95%;min-height:700px;position:relative;
+  display:flex;flex-direction:column;align-items:center;gap:10px
+}
+.table{
+  width:980px;min-height:640px;
+  background:radial-gradient(circle at center,#153754,#08131d);
+  border-radius:30px;padding:18px;border:3px solid rgba(255,255,255,.15);
+  position:relative;box-shadow:0 20px 40px rgba(0,0,0,.6);
+  overflow:hidden;
+}
+.deck{
+  position:absolute;left:60px;top:60px;
+  width:90px;height:120px;border-radius:8px;
+  background:repeating-linear-gradient(45deg,#0e2f48,#0e2f48 8px,#041522 8px,#041522 16px);
+  display:flex;align-items:center;justify-content:center;
+  font-size:14px;font-weight:700;box-shadow:0 6px 18px rgba(0,0,0,.5);
+  color:#fff;
+}
+.hand{
+  min-height:160px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:0; /* gap kaldırıldı, spacing JS ile ayarlanacak */
+  position:relative;
+  flex-wrap:nowrap; /* Kartlar tek satırda */
+  overflow:hidden; /* taşmayı gizle */
+}
+
+.dealer{position:absolute;top:80px;left:50%;transform:translateX(-50%);}
+.player{position:absolute;bottom:80px;left:50%;transform:translateX(-50%);}
+.card{
+  width:100px;height:140px;border-radius:8px;background:var(--card);color:#111;
+  display:flex;flex-direction:column;justify-content:space-between;padding:8px;font-weight:800;
+  box-shadow:0 6px 14px rgba(0,0,0,.45);
+  position:absolute;transition:all 1s ease;
+  transform-style:preserve-3d;
+  backface-visibility:hidden;
+}
+.card .corner{font-size:18px}
+.card.face-down{
+  background:repeating-linear-gradient(45deg,#145c40,#145c40 8px,#0a3b26 8px,#0a3b26 16px);
+  color:#fff;display:flex;align-items:center;justify-content:center;font-size:14px;
+}
+.controls{display:flex;gap:12px;align-items:center;margin-top:10px;justify-content:center}
+button{background:var(--accent);border:none;padding:10px 16px;border-radius:10px;font-weight:800;cursor:pointer;box-shadow:0 6px 14px rgba(0,0,0,.35);color:#000}
+button:disabled{opacity:.5;cursor:not-allowed}
+.center-msg{
+  position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+  background:rgba(0,0,0,.85);padding:24px 32px;border-radius:12px;
+  font-size:24px;display:none;text-align:center;
+}
+#confetti-canvas{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;}
+.bottom-msg{margin-top:12px;font-size:18px;font-weight:700;cursor:pointer;color:#ffd166;text-shadow:0 0 6px #000;display:none}
+#start-screen{
+  position:fixed;inset:0;background:rgba(0,0,0,.85);
+  display:flex;align-items:center;justify-content:center;flex-direction:column;
+  z-index:1000;text-align:center;
+}
+#start-screen h1{font-size:32px;margin-bottom:20px;}
+#home-link{
+  margin-top:18px;font-weight:700;color:#ffd166;cursor:pointer;text-shadow:0 0 6px #000;font-size:18px;
+}
+.score-under{margin-top:8px;font-size:20px;font-weight:700;color:#ffd166;text-shadow:0 0 8px #000;text-align:center;}
+</style>
+</head>
+<body>
+
+<div id="start-screen">
+  <h1>Oyuna geçelim mi?</h1>
+  <button id="btn-start">🎮 Oyuna Başla</button>
+</div>
+
+<canvas id="confetti-canvas"></canvas>
+<div class="wrap">
+  <div class="table">
+    <div class="deck" id="deck">DESTEK</div>
+
+    <div class="dealer">
+      <div class="hand" id="dealer-hand"></div>
+      <div class="score-under">Kurpiyer Puanı: <span id="dealer-score">0</span></div>
+    </div>
+
+    <div class="player">
+      <div class="hand" id="player-hand"></div>
+      <div class="score-under">Sizin Puanınız: <span id="player-score">0</span></div>
+      <div class="controls">
+        <!-- buttonlar -->
+        <button id="btn-hit">Kart Çek</button>
+        <button id="btn-stand">Kal</button>
+      </div>
+    </div>
+
+    <div class="center-msg" id="center-msg"></div>
+  </div>
+
+  <div class="bottom-msg" id="bottom-msg">▶️ Devam Et</div>
+  <div id="home-link" onclick="window.location.href='index.html'">🏠 Ana Sayfa</div>
+</div>
+
+<script>
+const suits=['♠','♥','♦','♣'],ranks=['A','2','3','4','5','6','7','8','9','10','J','Q','K'];
+// Deste oluşturma
+function buildDeck(){const d=[];for(let s of suits)for(let r of ranks)d.push({suit:s,rank:r});return d;}
+function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+//Kart değeri hesaplama
+function cardValue(c){if(c.rank==='A')return 11;if(['J','Q','K'].includes(c.rank))return 10;return +c.rank;}
+//El değeri hesaplama
+function handValue(h){let t=0,a=0;for(const c of h){t+=cardValue(c);if(c.rank==='A')a++;}while(t>21&&a>0){t-=10;a--;}return t;}
+
+const dealerEl=document.getElementById('dealer-hand'),
+      playerEl=document.getElementById('player-hand'),
+      dealerScore=document.getElementById('dealer-score'),
+      playerScore=document.getElementById('player-score'),
+      msg=document.getElementById('center-msg'),
+      btnHit=document.getElementById('btn-hit'),
+      btnStand=document.getElementById('btn-stand'),
+      bottomMsg=document.getElementById('bottom-msg'),
+      deckEl=document.getElementById('deck');
+
+let deck=[],player=[],dealer=[],hidden=null,roundEnd=false;
+
+function makeCardEl(c,hidden=false){
+  const el=document.createElement('div');
+  el.className='card'+(hidden?' face-down':'');
+  if(hidden){
+    el.dataset.rank=c.rank;
+    el.dataset.suit=c.suit;
+    el.textContent='KAPALI';
+  } else {
+    const t=document.createElement('div');t.className='corner';t.textContent=c.rank+c.suit;
+    const m=document.createElement('div');m.style.textAlign='center';m.style.fontSize='28px';m.textContent=c.suit;
+    const b=document.createElement('div');b.className='corner';b.textContent=c.rank+c.suit;
+    el.append(t,m,b);
+  }
+  return el;
+}
+
+//Kart dağıtıma animasyonu
+async function dealFromDeck(targetEl, card, index, hidden=false){
+  return new Promise(resolve=>{
+    const el=makeCardEl(card, hidden);
+    document.body.appendChild(el);
+
+    const deckRect=deckEl.getBoundingClientRect();
+    const targetRect=targetEl.getBoundingClientRect();
+    
+    // Kartların ekrana sığması için spacing hesapla
+    const maxCards=8; // maksimum yan yana kart sayısı için referans
+    const spacing = Math.min(120, targetRect.width / Math.max(targetEl.children.length + 1, maxCards));
+
+    const totalWidth = (targetEl.children.length) * spacing;
+    const startX = targetRect.left + (targetRect.width - totalWidth) / 2;
+    const xPos = startX + index * spacing;
+    const yPos = targetRect.top + targetRect.height/2 - 70;
+
+    el.style.left=deckRect.left+'px';
+    el.style.top=deckRect.top+'px';
+    el.style.position='fixed';
+    el.style.transition='all 1s ease';
+
+    setTimeout(()=>{
+      el.style.left=xPos+'px';
+      el.style.top=yPos+'px';
+    },20);
+
+    setTimeout(()=>{
+      el.style.position='absolute';
+      el.style.left=(index*spacing)+'px';
+      el.style.top='0px';
+      targetEl.appendChild(el);
+      updateScores();
+      resolve();
+    },1000);
+  });
+}
+
+
+function updateScores(){
+  playerScore.textContent=handValue(player);
+  dealerScore.textContent=hidden?'?':handValue(dealer);
+}
+// Yeni tur başlatma
+async function newRound(){
+  dealerScore.textContent='0';
+  playerScore.textContent='0';
+  msg.style.display='none';bottomMsg.style.display='none';
+  deck=shuffle(buildDeck());player=[];dealer=[];hidden=null;roundEnd=false;
+  dealerEl.innerHTML='';playerEl.innerHTML='';
+  player.push(deck.pop());await dealFromDeck(playerEl,player[0],0);
+  dealer.push(deck.pop());await dealFromDeck(dealerEl,dealer[0],0);
+  player.push(deck.pop());await dealFromDeck(playerEl,player[1],1);
+  dealer.push(deck.pop());hidden=dealer[1];await dealFromDeck(dealerEl,hidden,1,true);
+  updateScores();
+}
+
+function revealDealer(){
+  const faceDown=document.querySelector('#dealer-hand .face-down');
+  if(faceDown){
+    const r=faceDown.dataset.rank,s=faceDown.dataset.suit;
+    faceDown.innerHTML='';
+    const t=document.createElement('div');t.className='corner';t.textContent=r+s;
+    const m=document.createElement('div');m.style.textAlign='center';m.style.fontSize='28px';m.textContent=s;
+    const b=document.createElement('div');b.className='corner';b.textContent=r+s;
+    faceDown.append(t,m,b);
+    faceDown.classList.remove('face-down');
+  }
+  hidden=null;updateScores();
+}
+
+//Oyun sonu konfeti
+function endRound(txt){
+  roundEnd=true;
+  msg.textContent=txt;msg.style.display='block';
+  revealDealer();
+  bottomMsg.style.display='block';
+  if(txt.includes("Kazandınız")) launchConfetti();
+}
+
+btnHit.onclick=async()=>{
+  if(roundEnd)return;
+  const card=deck.pop();player.push(card);
+  await dealFromDeck(playerEl,card,player.length-1);
+  const v=handValue(player);
+  if(v>21) endRound('Yandınız! )');
+  else if(v===21) endRound('Kazandınız! 21 🎉');
+};
+
+btnStand.onclick=async()=>{
+  if(roundEnd)return;
+  revealDealer();
+  await new Promise(r=>setTimeout(r,600));
+  while(handValue(dealer)<17){
+    const c=deck.pop();dealer.push(c);
+    await dealFromDeck(dealerEl,c,dealer.length-1);
+  }
+  const p=handValue(player),d=handValue(dealer);
+  if(d>21) endRound('Kurpiyer battı! Kazandınız!');
+  else if(p>21) endRound('Yandınız!');
+  else if(p===d) endRound('Berabere!');
+  else if(Math.abs(21-p)<Math.abs(21-d)) endRound('Kazandınız! 🎉');
+  else endRound('Kaybettiniz!');
+};
+
+bottomMsg.onclick=()=>{newRound();};
+
+function launchConfetti(){
+  const c=document.getElementById('confetti-canvas'),ctx=c.getContext('2d');
+  c.width=window.innerWidth;c.height=window.innerHeight;
+  const conf=[];
+  for(let i=0;i<120;i++)conf.push({x:Math.random()*c.width,y:Math.random()*c.height-Math.random()*c.height,r:Math.random()*4+2,s:Math.random()*3+2});
+  let frame=0;
+  function draw(){
+    ctx.clearRect(0,0,c.width,c.height);
+    conf.forEach(p=>{
+      ctx.beginPath();
+      ctx.fillStyle='hsl('+Math.random()*360+',100%,60%)';
+      ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
+      ctx.fill();
+      p.y+=p.s;if(p.y>c.height){p.y=0;}
+    });
+    frame++;if(frame<180)requestAnimationFrame(draw);
+  }
+  draw();
+}
+
+document.getElementById('btn-start').onclick=()=>{
+  document.getElementById('start-screen').style.display='none';
+  newRound();
+};
+</script>
+</body>
+</html>

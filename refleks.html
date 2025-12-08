@@ -1,0 +1,314 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Refleks Testi — Pika Mini Oyunlar</title>
+
+<style>
+/* ================= MASTER ŞABLON (Sade Topbar) ================= */
+:root{
+  --accent:#edff27;
+  --bg-dark:radial-gradient(circle at 30% 30%, #000000,#001f3f);
+  --text:#ffffff;
+  --muted:rgba(255,255,255,0.75);
+  --transition-fast:250ms;
+}
+
+html,body{
+  height:100%;
+  margin:0;
+  font-family:Inter,system-ui,Arial;
+  background:var(--bg-dark);
+  color:var(--text);
+  -webkit-font-smoothing:antialiased;
+}
+
+.container-border{
+  border:3px solid var(--accent);
+  min-height:100vh;
+  box-sizing:border-box;
+}
+
+/* ================= TOPBAR ================= */
+.topbar{
+  position:sticky;
+  top:0;
+  z-index:1600;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:10px 18px;
+  background:rgba(0,0,0,0.45);
+  border-bottom:3px solid var(--accent);
+}
+.top-left{display:flex;gap:12px;align-items:center}
+.hamburger{
+  width:42px;height:38px;
+  display:flex;flex-direction:column;justify-content:space-between;
+  padding:6px;cursor:pointer;border-radius:6px;background:rgba(0,0,0,0.2);
+}
+.hamburger .bar{
+  height:4px;background:var(--accent);border-radius:3px;transition:all .25s;
+}
+body.menu-open .hamburger .bar:nth-child(1){transform: translateY(8px) rotate(45deg);}
+body.menu-open .hamburger .bar:nth-child(2){opacity:0;}
+body.menu-open .hamburger .bar:nth-child(3){transform: translateY(-8px) rotate(-45deg);}
+
+.top-title{
+  font-weight:700;color:var(--accent);font-size:18px;
+}
+
+.hero-title{text-align:center;color:var(--accent);font-size:22px;font-weight:800;margin-bottom:4px}
+.hero-sub{text-align:center;color:var(--muted);font-size:14px}
+
+/* ================= SIDE MENU ================= */
+.side-menu{
+  position:fixed;top:0;left:-320px;width:320px;height:100%;
+  background:rgba(0,0,0,0.94);color:var(--accent);
+  padding:22px;z-index:1800;
+  transition:left var(--transition-fast);
+  border-right:3px solid var(--accent);
+}
+.side-menu.open{left:0}
+.side-menu h2{
+  font-size:20px;color:var(--accent);
+  padding-bottom:8px;border-bottom:2px solid var(--accent);
+  margin:0 0 12px;cursor:pointer;
+}
+.side-menu ul{list-style:none;margin:15px 0;padding:0;}
+.side-menu li{padding:12px 6px;border-bottom:1px solid rgba(255,255,59,0.08);}
+.side-menu a{color:var(--accent);text-decoration:none;font-size:17px}
+
+/* ================= ADS ================= */
+.ad-container{
+  position:fixed;top:50%;transform:translateY(-50%);
+  width:240px;height:420px;z-index:1200;
+  border:3px solid var(--accent);border-radius:10px;
+  background:#000;overflow:hidden;
+}
+.ad-left{left:8px}
+.ad-right{right:8px}
+.ad-container img{width:100%;height:100%;object-fit:cover}
+
+@media(max-width:1100px){.ad-container{display:none;}}
+
+/* ================= MAIN ================= */
+.content{max-width:1100px;margin:20px auto;padding:0 20px}
+.main-card{
+  border:3px solid var(--accent);
+  border-radius:12px;
+  padding:22px;
+  background:rgba(255,255,255,0.03);
+}
+
+/* ================= GAME ================= */
+.game-card{
+  width:100%;max-width:520px;
+  margin:auto;
+  background:rgba(0,0,0,0.35);
+  border-radius:12px;
+  padding:22px;
+  text-align:center;
+}
+.game-title{font-size:20px;font-weight:800;color:var(--accent);}
+.best{color:var(--muted);margin-bottom:12px}
+
+/* BOX */
+.ref-box{
+  width:260px;height:260px;margin:auto;
+  border-radius:14px;
+  background:#111;border:4px solid rgba(255,255,255,0.06);
+  display:flex;align-items:center;justify-content:center;
+  font-size:20px;color:var(--muted);
+  cursor:pointer;user-select:none;
+  transition:background .18s,transform .12s;
+}
+.ref-box.ready{background:#8b0000;color:#fff}
+.ref-box.go{background:#00a86b;color:#fff;transform:scale(1.04)}
+
+.result{margin-top:14px;font-size:18px;font-weight:700;color:#81d4fa}
+
+/* Buttons */
+.controls{margin-top:12px;display:flex;gap:8px;justify-content:center}
+.btn{
+  padding:10px 14px;border-radius:10px;
+  border:none;font-weight:700;cursor:pointer;
+}
+.play{background:var(--accent);color:#000}
+.reset{background:transparent;border:2px solid var(--accent);color:var(--accent)}
+</style>
+</head>
+
+<body class="container-border">
+
+<!-- ================= TOPBAR ================= -->
+<div class="topbar">
+  <div class="top-left">
+    <div id="hamburger" class="hamburger">
+      <div class="bar"></div><div class="bar"></div><div class="bar"></div>
+    </div>
+    <div class="top-title">Pika Oyun</div>
+  </div>
+  <div class="top-left"></div>
+  <div>
+    <div class="hero-title">Refleks Testi</div>
+    <div class="hero-sub">Hızını ölç — ne kadar hızlısın?</div>
+  </div>
+</div>
+
+<!-- ================= SIDE MENU ================= -->
+<nav class="side-menu" id="sideMenu">
+  <h2 onclick="closeMenu()">❌ Menü</h2>
+  <ul>
+    <li><a href="index.html">Oyunlar</a></li>
+    <li><a href="OyunSlideri.html">Hakkında</a></li>
+    <li><a href="iletisim.html">İletişim</a></li>
+  </ul>
+</nav>
+
+<!-- ADS -->
+<aside class="ad-container ad-left"><img src="reklam4.png"></aside>
+<aside class="ad-container ad-right"><img src="reklam4.png"></aside>
+
+<!-- ================= MAIN ================= -->
+<main class="content">
+  <section class="main-card">
+    <div class="game-card">
+
+      <div class="game-title">Refleks Testi</div>
+      <div class="best">En iyi: <span id="bestRef">-- ms</span></div>
+
+      <div id="refBox" class="ref-box">Hazırsan başla</div>
+
+      <div class="controls">
+        <button id="startBtn" class="btn play">Başlat</button>
+        <button id="resetBtn" class="btn reset">Sıfırla</button>
+      </div>
+
+      <div id="timerArea" style="margin-top:12px;color:var(--accent);font-weight:700;">
+        Geçen Süre: 0.000 sn
+      </div>
+
+      <div class="result" id="result">—</div>
+
+    </div>
+  </section>
+</main>
+
+<script>
+/* =============== MENÜ =============== */
+const body=document.body;
+const sideMenu=document.getElementById("sideMenu");
+const hamburger=document.getElementById("hamburger");
+
+function openMenu(){sideMenu.classList.add("open");body.classList.add("menu-open");}
+function closeMenu(){sideMenu.classList.remove("open");body.classList.remove("menu-open");}
+hamburger.addEventListener("click",()=>sideMenu.classList.contains("open")?closeMenu():openMenu());
+
+/* =============== REFLEKS OYUNU =============== */
+const refBox=document.getElementById("refBox");
+const startBtn=document.getElementById("startBtn");
+const resetBtn=document.getElementById("resetBtn");
+const resultEl=document.getElementById("result");
+const bestEl=document.getElementById("bestRef");
+const timerArea=document.getElementById("timerArea");
+
+let waiting=false,running=false,startTime=0,timeoutId=null;
+let timer=0,timerInterval=null;
+let best=localStorage.getItem("pika_ref_best")||0;
+bestEl.textContent = best>0 ? best+" ms" : "-- ms";
+
+/* TIMER */
+function startTimer(){
+  timer=0;
+  timerArea.textContent="Geçen Süre: 0.000 sn";
+  timerInterval=setInterval(()=>{
+    timer+=20;
+    timerArea.textContent="Geçen Süre: "+(timer/1000).toFixed(3)+" sn";
+    if(timer>=10000){
+      stopTimer();
+      running=false;
+      waiting=false;
+      refBox.className="ref-box";
+      refBox.textContent="Süre Doldu!";
+      resultEl.textContent="⛔ 10 saniye geçti — Yandınız!";
+    }
+  },20);
+}
+function stopTimer(){clearInterval(timerInterval);}
+
+/* RESET */
+function resetGame(){
+  clearTimeout(timeoutId);
+  stopTimer();
+  waiting=false;running=false;
+  refBox.className="ref-box";
+  refBox.textContent="Hazırsan başla";
+  resultEl.textContent="—";
+  timerArea.textContent="Geçen Süre: 0.000 sn";
+}
+
+/* BAŞLAT */
+function startSequence(){
+  resetGame();
+  startTimer();
+  waiting=true;
+
+  refBox.className="ref-box ready";
+  refBox.textContent="Bekleyin...";
+
+  const delay=700+Math.random()*1700;
+  timeoutId=setTimeout(()=>{
+    waiting=false;
+    running=true;
+    startTime=performance.now();
+    refBox.className="ref-box go";
+    refBox.textContent="Tıkla!";
+  },delay);
+}
+
+/* BOX TIKLAMALARI */
+refBox.addEventListener("click",()=>{
+  if(running){
+    stopTimer();
+    running=false;
+
+    const ms=Math.round(performance.now()-startTime);
+    resultEl.textContent=ms+" ms";
+
+    if(!best || ms < best){
+      best=ms;
+      localStorage.setItem("pika_ref_best",best);
+      bestEl.textContent=best+" ms";
+      resultEl.textContent+=" (Yeni Rekor!)";
+    }
+
+    refBox.className="ref-box";
+    refBox.textContent="Hazırsan başla";
+  }
+  else if(waiting){
+    clearTimeout(timeoutId);
+    waiting=false;
+    stopTimer();
+    refBox.className="ref-box";
+    refBox.textContent="Erken Bastın!";
+    resultEl.textContent="⚠️ Erken bastın!";
+  }
+  else{
+    startSequence();
+  }
+});
+
+/* BUTTONS */
+startBtn.onclick=()=>startSequence();
+resetBtn.onclick=()=>resetGame();
+
+/* Engelle */
+window.addEventListener("keydown",e=>{
+  if(["ArrowUp","ArrowDown"," "].includes(e.code)) e.preventDefault();
+});
+</script>
+
+</body>
+</html>

@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<title>Pika – Eriyen Kardan Adam Oyunu ⛄🔥</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<style>
+/* -----------------------------------------------------
+   GENEL TASARIM (Blackjack ile %100 uyumlu)
+----------------------------------------------------- */
+:root{
+  --accent:#edff27;
+  --accent-strong:#ffd700;
+  --bg-dark:radial-gradient(circle at 30% 30%, #000000,#001f3f);
+  --text:#ffffff;
+  --muted:rgba(255,255,255,0.75);
+}
+html,body{
+  height:100%;margin:0;
+  font-family:Inter,Arial,sans-serif;
+  background:var(--bg-dark);
+  color:var(--text);
+  -webkit-font-smoothing:antialiased;
+}
+
+/* -----------------------------------------------------
+   TOPBAR + HAMBURGER
+----------------------------------------------------- */
+.topbar{
+  position:sticky;top:0;z-index:2000;
+  display:flex;align-items:center;
+  justify-content:space-between;
+  padding:10px 18px;
+  background:rgba(0,0,0,0.45);
+  border-bottom:3px solid var(--accent);
+}
+.top-left{display:flex;gap:12px;align-items:center}
+.hamburger{
+  width:42px;height:38px;padding:6px;
+  display:flex;flex-direction:column;
+  justify-content:space-between;
+  cursor:pointer;border-radius:6px;
+  background:rgba(0,0,0,0.2);
+}
+.hamburger div{
+  height:4px;background:var(--accent);
+  border-radius:3px;
+}
+.hero-title{
+  color:var(--accent);
+  font-size:22px;font-weight:800;
+}
+.hero-sub{
+  font-size:13px;color:var(--muted);
+  text-align:center;
+}
+.theme-toggle{
+  cursor:pointer;border:2px solid var(--accent);
+  background:transparent;color:var(--accent);
+  padding:6px 10px;border-radius:8px;
+}
+
+/* -----------------------------------------------------
+   SIDE MENU
+----------------------------------------------------- */
+.side-menu{
+  position:fixed;top:0;left:-300px;
+  width:300px;height:100%;
+  background:rgba(0,0,0,0.95);
+  color:var(--accent);
+  padding:22px;z-index:3000;
+  border-right:3px solid var(--accent);
+  transition:left .25s;
+}
+.side-menu.open{left:0}
+.side-menu h2{
+  margin:0 0 14px;padding-bottom:8px;
+  font-size:20px;border-bottom:2px solid var(--accent);
+  cursor:pointer;
+}
+.side-menu ul{
+  list-style:none;padding:0;margin:16px 0;
+}
+.side-menu li{
+  padding:12px 6px;font-size:17px;
+  border-bottom:1px solid rgba(255,255,255,0.1);
+}
+.side-menu a{
+  color:var(--accent);text-decoration:none;
+}
+
+/* -----------------------------------------------------
+   REKLAM BÖLGELERİ
+----------------------------------------------------- */
+.ad-container{
+  position:fixed;top:50%;transform:translateY(-50%);
+  width:180px;height:75vh;
+  z-index:1500;
+}
+.ad-left{left:10px}
+.ad-right{right:10px}
+.ad-box{
+  width:100%;height:100%;
+  border:3px solid var(--accent-strong);
+  border-radius:10px;
+  background-size:cover;
+  background-position:center;
+}
+@media(max-width:1200px){ .ad-container{display:none} }
+
+/* -----------------------------------------------------
+   OYUN ALANI TASARIMI
+----------------------------------------------------- */
+.game-wrap{
+  max-width:1100px;margin:20px auto;
+  padding:0 10px;
+  text-align:center;
+}
+.game-box{
+  border:3px solid var(--accent);
+  border-radius:12px;
+  padding:20px;
+  background:rgba(255,255,255,0.03);
+}
+.section-title{
+  font-size:22px;
+  color:var(--accent);
+  margin-bottom:10px;
+}
+
+.controls{
+  margin:20px;
+}
+.controls button, select{
+  padding:10px 14px;font-size:15px;
+  border:none;border-radius:8px;
+}
+.controls button{
+  background:var(--accent);
+  font-weight:700;color:#000;cursor:pointer;
+}
+
+/* Kar Adam + Kelime */
+.MeltingSnowman{
+  width:380px;height:380px;
+  margin:10px auto;
+  border:3px solid var(--accent);
+  background:#000;
+  display:flex;align-items:center;justify-content:center;
+  border-radius:12px;overflow:hidden;
+}
+.MeltingSnowman img{
+  width:100%;height:100%;object-fit:contain;
+}
+.word{
+  font-size:2rem;font-weight:800;
+  letter-spacing:15px;margin:20px 0;
+}
+
+.letters{
+  display:flex;flex-wrap:wrap;
+  justify-content:center;max-width:700px;
+  margin:20px auto;
+}
+.letters button{
+  margin:4px;padding:10px 12px;
+  font-size:1.2rem;border:none;
+  background:#1d4c73;color:#fff;
+  border-radius:6px;
+  cursor:pointer;
+}
+.letters button:disabled{
+  background:#b30000;
+  cursor:default;
+}
+.message{
+  font-size:1.6rem;
+  font-weight:700;
+  margin-top:20px;
+  color:var(--accent);
+}
+
+/* INFO BOX */
+.info-box{
+  margin-top:20px;
+  padding:15px;border-radius:12px;
+  border:2px solid var(--accent);
+  background:rgba(0,0,0,0.45);
+}
+.info-box h3{color:#81d4fa;margin:0 0 8px}
+
+/* FOOTER */
+footer{
+  margin:30px 0 10px;
+  color:#6bb6ff;
+}
+
+</style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<div class="topbar">
+    <div class="top-left">
+        <div class="hamburger" onclick="toggleMenu()"><div></div><div></div><div></div></div>
+        <div class="top-title">Pika Oyun</div>
+    </div>
+
+    <div>
+        <div class="hero-title">Eriyen Kardan Adam</div>
+        <div class="hero-sub">Harfi bul, kardan adamı kurtar!</div>
+    </div>
+
+</div>
+
+<!-- SIDE MENU -->
+<nav class="side-menu" id="sideMenu">
+    <h2 onclick="toggleMenu()">❌ Menü</h2>
+    <ul>
+        <li><a href="index.html">🏠 Ana Sayfa</a></li>
+        <li><a href="OyunSlideri.html">🎮 Oyun Bilgileri</a></li>
+        <li><a href="iletisim.html">📩 İletişim</a></li>
+    </ul>
+</nav>
+
+<!-- REKLAMLAR -->
+<div class="ad-container ad-left">
+  <div class="ad-box" style="background-image:url('reklam4.png')"></div>
+</div>
+<div class="ad-container ad-right">
+  <div class="ad-box" style="background-image:url('reklam3.jpeg')"></div>
+</div>
+
+<!-- OYUN ALANI -->
+<div class="game-wrap">
+
+  <div class="game-box">
+
+    <h2 class="section-title">Kelimeyi tahmin et ve kardan adamı kurtar! ❄🔥</h2>
+
+    <div class="controls">
+        <label>Zorluk:</label>
+        <select id="difficulty">
+            <option value="easy">Kolay</option>
+            <option value="medium">Orta</option>
+            <option value="hard">Zor</option>
+        </select>
+        <button onclick="initializeGame()">🔄 Yeni Kelime</button>
+    </div>
+
+    <div class="MeltingSnowman"></div>
+    <div class="word"></div>
+    <div class="letters"></div>
+    <div class="message"></div>
+  </div>
+
+  <div class="info-box">
+    <h3>❄ Nasıl Oynanır?</h3>
+    <p>Doğru harfe basarsan kelime açılır, yanlış basarsan kardan adam erir.</p>
+    <p>6 yanlış yaparsan tamamen erir! ⛄🔥</p>
+  </div>
+
+</div>
+
+<footer>© 2025 Pika Mini Arcade — Eğlencenin Tek Adresi!</footer>
+
+<script>
+/* ----------------------
+   HAMBURGER / MENU
+---------------------- */
+function toggleMenu(){
+  document.getElementById("sideMenu").classList.toggle("open");
+}
+function toggleTheme(){
+  document.body.classList.toggle("light");
+}
+
+/* ----------------------
+   KARDAN ADAM OYUNU
+---------------------- */
+
+const wordCategories={
+  "easy": [
+    "ANNE",
+    "BABA",
+    "COCUK",
+    "OKUL",
+    "CICEK",
+    "YOL",
+    "PARA",
+    "ISIK",
+    "SES",
+    "ACIK",
+    "KAPALI",
+    "SICAK",
+    "SOGUK",
+    "RENK",
+    "AKSAM",
+    "SABAH",
+    "YAGMUR",
+    "KAR",
+    "TATIL",
+    "OYUN"
+  ],
+  "medium": [
+    "TELEVIZYON",
+    "INTERNET",
+    "MARKET",
+    "OTOBUS",
+    "TREN",
+    "UCAK",
+    "HAFTA",
+    "DAKIKA",
+    "FIYAT",
+    "SORU",
+    "CEVAP",
+    "MUDUR",
+    "SEHIR",
+    "ULKE",
+    "DUVAR",
+    "PENCERE",
+    "KALEM",
+    "DEFTAR",
+    "SARJ",
+    "FIZIKSEL"
+  ],
+  "hard": [
+    "GELISTIRME",
+    "DEGISIM",
+    "SOSYAL",
+    "EKONOMIK",
+    "POLITIKA",
+    "KULTUR",
+    "TARIHSEL",
+    "MUHENDISLIK",
+    "SORUMLULUK",
+    "COZUMLEME",
+    "URETIM",
+    "IHTIYAC",
+    "SERBESTLIK",
+    "TASARIM",
+    "GEREKIR"
+  ]
+
+};
+
+const snowmanImages={
+  6:`<img src="kelime6sev.png">`,
+  5:`<img src="kelime5sev.png">`,
+  4:`<img src="kelime4sev.png">`,
+  3:`<img src="kelime3sev.png">`,
+  2:`<img src="kelime2sev.png">`,
+  1:`<img src="kelime1sev.png">`,
+  0:`<img src="kelime0sev.png">`
+};
+
+let wordToGuess="";
+let guessedLetters=[];
+let wrongGuesses=0;
+const maxWrongGuesses=6;
+
+function selectWord(){
+  let d=document.getElementById("difficulty").value;
+  let list=wordCategories[d];
+  return list[Math.floor(Math.random()*list.length)];
+}
+
+function initializeGame(){
+  wordToGuess=selectWord();
+  guessedLetters=Array(wordToGuess.length).fill("_");
+  wrongGuesses=0;
+
+  document.querySelector(".MeltingSnowman").innerHTML=snowmanImages[6];
+  document.querySelector(".message").innerText="";
+
+  document.querySelector(".word").innerText=guessedLetters.join(" ");
+
+  const lettersContainer=document.querySelector(".letters");
+  lettersContainer.innerHTML="";
+
+  const letters="ABCÇDEFGĞHIİJKLMNOÖPRSŞTUÜVYZ";
+
+  for(let l of letters){
+    let btn=document.createElement("button");
+    btn.innerText=l;
+    btn.onclick=()=>handleGuess(l,btn);
+    lettersContainer.appendChild(btn);
+  }
+}
+
+function handleGuess(letter,btn){
+
+  if(wrongGuesses>=maxWrongGuesses) return;
+
+  btn.disabled=true;
+
+  let correct=false;
+  for(let i=0;i<wordToGuess.length;i++){
+    if(wordToGuess[i]===letter){
+      guessedLetters[i]=letter;
+      correct=true;
+    }
+  }
+
+  if(!correct){
+    wrongGuesses++;
+    document.querySelector(".MeltingSnowman").innerHTML=
+      snowmanImages[maxWrongGuesses-wrongGuesses];
+    btn.style.background="#b30000";
+  }else{
+    btn.style.background="green";
+  }
+
+  document.querySelector(".word").innerText=guessedLetters.join(" ");
+
+  checkWinOrLose();
+}
+
+function checkWinOrLose(){
+
+  if(guessedLetters.join("")===wordToGuess){
+    document.querySelector(".message").innerText=
+      "🎉 Tebrikler! Kardan adam kurtuldu!";
+    disableButtons();
+  }
+
+  if(wrongGuesses>=maxWrongGuesses){
+    document.querySelector(".message").innerText=
+      `⛄🔥 Kaybettin! Kelime: "${wordToGuess}"`;
+    disableButtons();
+  }
+}
+
+function disableButtons(){
+  document.querySelectorAll(".letters button").forEach(b=>b.disabled=true);
+}
+
+window.onload=initializeGame;
+</script>
+
+</body>
+</html>

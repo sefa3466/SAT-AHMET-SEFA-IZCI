@@ -1,264 +1,629 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="tr">
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Flappy Rocket</title>
+<title>🚀 Pika Flappy Roket</title>
 <style>
-body {
-  background: radial-gradient(circle at 50% 30%, #1e3a8a 0%, #020617 100%);
-  display:flex; align-items:center; justify-content:center;
-  height:100vh; margin:0; flex-direction:column;
-  font-family:Inter,system-ui; color:#e6eef8; overflow:hidden;
+/* ========== KÖK & TEMALAR ========== */
+:root{
+  --accent: #edff27;
+  --bg-dark: radial-gradient(circle at 30% 30%, #000000, #001f3f);
+  --page-bg-dark: #071022;
+  --text-dark: #ffffff;
+  --card-bg-dark: rgba(255,255,255,0.06);
+
+  --bg-light: #ffffff;
+  --page-bg-light: #f6f7fb;
+  --text-light: #0b0b0b;
+  --card-bg-light: #ffffff;
+
+  --transition-fast: 250ms;
+  --transition-slow: 420ms;
 }
-canvas {
-  background: linear-gradient(180deg, #061b2f 0%, #0a253f 100%);
-  border-radius:18px;
-  box-shadow:0 8px 40px rgba(0,0,0,0.6);
+
+/* varsayılan karanlık tema */
+html,body{
+  height:100%;
+  margin:0;
 }
-p { margin-top:10px; color:#bcd6f0; font-size:14px; }
-a { color:#38bdf8; text-decoration:none; margin-top:10px; }
+body{
+  font-family: Inter, system-ui, Arial, sans-serif;
+  background: var(--bg-dark);
+  color: var(--text-dark);
+  transition: background var(--transition-slow), color var(--transition-slow);
+  min-height:100vh;
+  overflow-x:hidden;
+}
+
+/* açık tema */
+body.light{
+  background: var(--bg-light); 
+  color: var(--text-light); 
+}
+.container-border{ 
+  border:3px solid var(--accent); 
+}
+*{ 
+  box-sizing:border-box; 
+}
+
+/* genel kenarlık vurgusu */
+.container-border{
+  border: 3px solid var(--accent);
+  transition: border var(--transition-fast);
+}
+
+/* ========== ÜST ÇUBUK (yapışkan) ========== */
+.topbar{
+  position: sticky;
+  top:0;
+  z-index:1600;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  padding:10px 20px;
+  background: rgba(0,0,0,0.5);
+  backdrop-filter: blur(6px);
+  border-bottom:3px solid var(--accent);
+  transition: background var(--transition-fast), color var(--transition-fast);
+}
+body.light .topbar{
+  background: rgba(255,255,255,0.8);
+}
+
+/* sol grup (hamburger + başlık) */
+.top-left{
+  display:flex;
+  gap:12px;
+  align-items:center;
+}
+.hamburger{
+  width:42px;height:38px; padding:6px;
+  display:flex; flex-direction:column; justify-content:space-between;
+  cursor:pointer; border-radius:6px;
+  background:rgba(0,0,0,0.2);
+  transition:300ms;
+}
+.hamburger .bar{ 
+  height:4px; 
+  background:var(--accent); 
+  border-radius:3px; 
+  transition:300ms; 
+}
+.menu-open .hamburger{ 
+  background: rgba(0,0,0,0.25); 
+}
+.menu-open .hamburger .bar:nth-child(1){ 
+  transform: translateY(8px) rotate(45deg); 
+}
+.menu-open .hamburger .bar:nth-child(2){ 
+  opacity:0; 
+}
+.menu-open .hamburger .bar:nth-child(3){ 
+  transform: translateY(-8px) rotate(-45deg); 
+}
+.top-title{ 
+  font-weight:700; 
+  color:var(--accent); 
+  font-size:20px; 
+}
+.top-right{ 
+  display:flex; 
+  gap:10px; 
+  align-items:center; 
+}
+.search-input{
+  padding:8px 12px; 
+  border-radius:8px;
+  border:2px solid var(--accent);
+  background:rgba(242, 255, 0, 0.25); 
+  color:inherit;
+}
+.theme-toggle{
+  cursor:pointer; 
+  padding:6px 10px; 
+  border-radius:8px;
+  border:2px solid var(--accent); 
+  background:transparent; 
+  color:var(--accent);
+}
+
+/* ========== YAN MENÜ (sol) ========== */
+.side-menu{
+  position:fixed;
+  top:0;
+  left:-320px;
+  width:320px;
+  height:100%;
+  background: rgba(0,0,0,0.92);
+  color:var(--accent);
+  padding:30px 20px;
+  z-index:1700;
+  transition: left var(--transition-fast) cubic-bezier(.2,.9,.2,1), background var(--transition-fast);
+  border-right:3px solid var(--accent);
+  overflow:auto;
+}
+body.light .side-menu{ 
+  background:#fff; 
+  color:var(--text-light); 
+}
+
+.side-menu h2{ 
+  font-size:20px; 
+  margin:0 0 14px 0; 
+  color:var(--accent); 
+  border-bottom:2px solid var(--accent); 
+  padding-bottom:8px;
+}
+.side-menu ul{ 
+  list-style:none; 
+  padding:0; 
+  margin:20px 0 0 0;
+}
+.side-menu li{
+  padding:12px 6px; 
+  margin-bottom:6px;
+  border-bottom:1px solid rgba(255,235,59,0.12);
+  font-size:17px; 
+  color:var(--accent);
+  cursor:pointer;
+}
+body.light .side-menu li{ 
+  color:var(--text-light); 
+  border-bottom:1px solid rgba(255,235,59,0.12); 
+}
+.side-menu li:hover{ 
+  background: rgba(255,235,59,0.06); 
+}
+
+/* açık durum */
+.menu-open .side-menu{ 
+  left:0; 
+}
+
+/* ========== SOL REKLAM (menü açılınca hareket eder) ========== */
+.left-ad{
+  position:fixed; 
+  top:50%; 
+  left:8px; 
+  transform:translateY(-50%);
+  width:240px; 
+  height:420px; 
+  z-index:1200;
+  border:3px solid var(--accent); 
+  border-radius:10px; 
+  overflow:hidden;
+  transition: left var(--transition-fast);
+  background:#000;
+}
+.menu-open .left-ad{ 
+  left:336px; 
+}
+.left-ad img{ 
+  width:100%; 
+  height:100%; 
+  object-fit:cover; 
+  display:block; 
+}
+
+/* ========== SAĞ REKLAM (büyük & sabit) ========== */
+.right-ad{
+  position:fixed; 
+  right:0; 
+  top:45%; 
+  transform:translateY(-50%);
+  width:240px; 
+  height:420px; 
+  z-index:1200;
+  border:3px solid var(--accent); 
+  border-radius:12px; 
+  overflow:hidden; 
+  background:#000;
+}
+.right-ad img{ 
+  width:100%; 
+  height:100%; 
+  object-fit:cover; 
+  display:block; 
+}
+
+/* ========== İÇERİK KABı ========== */
+.content{
+  max-width:1200px;
+  margin:28px auto 80px;
+  padding:0 20px;
+}
+
+/* OYUN KANVAS */
+.game-canvas{
+  width:100%; 
+  max-width:800px; 
+  height:70vh; 
+  max-height:600px;
+  margin:20px auto; 
+  display:block;
+  background: linear-gradient(180deg,#041830,#08253f);
+  border:4px solid var(--accent); 
+  border-radius:18px; 
+  box-shadow:0 0 35px rgba(0,0,0,0.7);
+}
+
+/* KONTROL BUTONLARI */
+.controls{
+  display:flex; 
+  gap:12px; 
+  justify-content:center; 
+  flex-wrap:wrap;
+  margin:20px 0;
+}
+.game-btn{
+  padding:14px 24px; 
+  border:none; 
+  border-radius:12px; 
+  font-size:18px;
+  cursor:pointer; 
+  background:var(--accent); 
+  color:#000; 
+  font-weight:700;
+  border:2px solid var(--accent);
+  transition: all var(--transition-fast);
+  min-width:120px;
+}
+.game-btn:hover{
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(237,255,39,0.4);
+}
+
+/* OYUN TALİMATLARI */
+.game-info{
+  text-align:center; 
+  max-width:600px; 
+  margin:0 auto 40px;
+  color:rgba(255,255,255,0.9);
+  font-size:18px; 
+  font-weight:500;
+  line-height:1.6;
+}
+body.light .game-info{ color:rgba(0,0,0,0.8); }
+
+/* RESPONSIVE */
+@media(max-width:1100px){
+  .right-ad{ display:none; }
+  .left-ad{ width:180px; height:320px; }
+  .side-menu{ width:280px; left:-280px; } 
+  .menu-open .left-ad{ left:296px; }
+}
+@media(max-width:700px){
+  .left-ad{ display:none; } 
+  .right-ad{ display:none; }
+  .controls{ flex-direction:column; align-items:center; }
+  .game-btn{ width:200px; }
+}
 </style>
 </head>
-<body>
-<canvas id="game" width="360" height="480"></canvas>
-<p>Uzayın derinliklerinde küçük bir roketle engellerden kaçmaya hazır mısın?</p>
-<p>Boşluk tuşuna basarak roketini yukarı it, düşmeden yeşil geçitlerin arasından geç.</p>
-<p>Ne kadar uzun süre dayanırsan, o kadar çok puan kazanırsın!</p>
-<p>Rekorunu kırdığında konfeti patlamasını izle 🎉</p>
-<a href="index.html">← Ana Menü</a>
+<body class="container-border">
+
+  <!-- ÜST ÇUBUK -->
+  <div class="topbar">
+    <div class="top-left">
+      <div class="hamburger" title="Menü Aç/Kapat" onclick="toggleMenu()" aria-label="Menü butonu">
+        <div class="bar"></div><div class="bar"></div><div class="bar"></div>
+      </div>
+      <div class="top-title">Pika Oyun</div>
+    </div>
+    
+    <div class="top-right">
+      <input id="searchInput" class="search-input" placeholder="Oyun ara..." />
+      <button class="theme-toggle" onclick="toggleTheme()" id="themeBtn">🌙</button>
+    </div>
+  </div>
+
+  <!-- YAN MENÜ -->
+  <nav class="side-menu" id="sideMenu" aria-hidden="true">
+    <h2 onclick="closeMenu()"> ❌ Menü </h2>
+    <ul>
+      <li onclick="closeMenu(); window.location.href='index.html'">🏠 Ana Sayfa</li>
+      <li onclick="closeMenu(); window.location.href='OyunSlideri.html'">ℹ️ Hakkında</li>
+      <li onclick="goTo('#contact')"><a href="iletisim.html">İletişim</a></li>
+    </ul>
+  </nav>
+
+  <!-- SOL REKLAM -->
+  <aside class="left-ad" id="leftAd">
+    <a href="https://www.pulibet137.com" target="_blank">
+      <img src="reklam4.png" alt="Reklam Sol">
+    </a>
+  </aside>
+
+  <!-- SAĞ REKLAM -->
+  <aside class="right-ad" id="rightAd">
+    <a href="https://www.pulibet137.com" target="_blank">
+      <img src="reklam4.png" alt="Reklam Sağ">
+    </a>
+  </aside>
+
+  <!-- OYUN İÇERİĞİ -->
+  <main class="content">
+    <h1 style="text-align:center; color:var(--accent); font-size:2.8rem; margin-bottom:10px; font-weight:800;">
+      🚀 Pika Flappy Roket
+    </h1>
+    
+    <div class="game-info">
+      Space / Tıkla ile roketi zıplat. Yeşil boşluklardan geç! En yüksek skoru yap!
+    </div>
+
+    <!-- OYUN KANVAS -->
+    <canvas id="game" class="game-canvas"></canvas>
+
+    <!-- KONTROL BUTONLARI -->
+    <div class="controls">
+      <button id="startBtn" class="game-btn">🚀 BAŞLA</button>
+      <button id="pauseBtn" class="game-btn">⏸️ DURDUR</button>
+      <button id="resumeBtn" class="game-btn">▶️ DEVAM</button>
+    </div>
+  </main>
+
+  <!-- FOOTER -->
+  <section id="contact" style="margin-top:60px; padding:40px 20px; text-align:center;">
+    <div style="padding:24px; border:2px dashed var(--accent); border-radius:16px; max-width:500px; margin:0 auto;">
+      <h3 style="margin:12px 0; color:var(--accent); font-size:22px;">Fikir ve Öneri</h3>
+      <p style="margin:12px 0; font-size:18px;">pikaoyun@example.com</p>
+      <p style="margin:8px 0; font-size:16px; opacity:0.8;">© 2025 Pika Mini Oyunlar</p>
+    </div>
+  </section>
 
 <script>
-const c = document.getElementById('game');
-const ctx = c.getContext('2d');
+/* ===== PİKA TEMPLATE FONKSİYONLARI ===== */
+const body = document.body;
+const sideMenu = document.getElementById('sideMenu');
+const leftAd = document.getElementById('leftAd');
+const overlay = document.createElement('div');
+overlay.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.45);z-index:1500;opacity:0;transition:opacity 300ms ease;pointer-events:none;';
+document.body.appendChild(overlay);
 
-// Oyun değişkenleri
-let rocket = { x:80, y:240, vy:0, size:12 };
-let pipes = [];
-let score = 0, best = 0;
-let gravity = 0.12, jump = -3.6, gameOver = false, frame = 0;
-let pipeSpeed = 1.3;
-let startTime = 0, elapsed = 0;
-let started = false, countdown = 3;
-let confetti = [];
-let stars = Array.from({length:25},()=>({x:Math.random()*360,y:Math.random()*480,s:Math.random()*1.5}));
-let recordBroken = false; // rekor sadece bir kez patlayacak
+function toggleMenu(){ body.classList.contains('menu-open') ? closeMenu() : openMenu(); }
+function openMenu(){
+  body.classList.add('menu-open');
+  sideMenu.setAttribute('aria-hidden','false');
+  overlay.style.pointerEvents='auto';
+  setTimeout(()=>{ overlay.style.opacity=1; },10);
+}
+function closeMenu(){
+  body.classList.remove('menu-open');
+  sideMenu.setAttribute('aria-hidden','true');
+  overlay.style.opacity=0;
+  setTimeout(()=>{ overlay.style.pointerEvents='none'; },300);
+}
+overlay.addEventListener('click', closeMenu);
 
-function spawnConfetti() {
-  for (let i=0; i<80; i++) {
-    confetti.push({
-      x: Math.random()*c.width,
-      y: Math.random()*c.height/2,
-      r: Math.random()*3+2,
-      c: `hsl(${Math.random()*360},90%,60%)`,
-      vy: Math.random()*3+2,
-      vx: (Math.random()-0.5)*2,
-      rot: Math.random()*360
+const themeBtn = document.getElementById('themeBtn');
+let isLight = false;
+function toggleTheme(){
+  isLight = !isLight;
+  body.classList.toggle('light', isLight);
+  themeBtn.textContent = isLight ? '🌞' : '🌙';
+}
+
+function goTo(selector){
+  closeMenu();
+  const el = document.querySelector(selector);
+  if(el) el.scrollIntoView({behavior:'smooth', block:'start'});
+}
+
+/* ===== FLAPPY ROKET OYUNU ===== */
+(() => {
+  const canvas = document.getElementById('game');
+  const ctx = canvas.getContext('2d');
+
+  function fitCanvas() {
+    const ratio = window.devicePixelRatio || 1;
+    const styleW = Math.min(window.innerWidth * 0.9, 800);
+    const styleH = Math.min(window.innerHeight * 0.65, 600);
+    canvas.style.width = styleW + 'px';
+    canvas.style.height = styleH + 'px';
+    canvas.width = Math.floor(styleW * ratio);
+    canvas.height = Math.floor(styleH * ratio);
+    ctx.setTransform(ratio,0,0,ratio,0,0);
+  }
+  window.addEventListener('resize', fitCanvas);
+  fitCanvas();
+
+  const rocketImg = new Image();
+  rocketImg.src = 'roket.png';
+  let rocketImgLoaded = false;
+  rocketImg.onload = () => rocketImgLoaded = true;
+
+  let rocket = { x: 120, y: 300, vy: 0, size: 25 };
+  let pipes = [];
+  let score = 0, best = localStorage.getItem('flappyBest') || 0;
+  let gravity = 0.18, jump = -4, pipeSpeed = 2.0, frame = 0;
+  let playing = false, paused = false, countdown = 0;
+  let lastTime = 0, lastSpawnFrame = 0;
+
+  function resetSizes() {
+    const cw = canvas.width / (window.devicePixelRatio||1);
+    rocket.x = Math.floor(cw * 0.14);
+    rocket.size = Math.max(7, Math.floor(cw * 0.02));
+  }
+
+  let stars = [];
+  function createStars() {
+    const cw = canvas.width / (window.devicePixelRatio||1);
+    const ch = canvas.height / (window.devicePixelRatio||1);
+    stars = Array.from({length: Math.max(12, Math.floor(cw/20))}, () => ({
+      x: Math.random()*cw, y: Math.random()*ch, s: Math.random()*2+0.5
+    }));
+  }
+
+  function spawnPipe() {
+    const cw = canvas.width / (window.devicePixelRatio||1);
+    const ch = canvas.height / (window.devicePixelRatio||1);
+    const top = Math.random()*(ch*0.35) + (ch*0.1);
+    const gap = Math.max(120, Math.floor(ch * 0.31));
+    pipes.push({ x: cw + 40, top, gap, w: Math.max(32, Math.floor(cw*0.11)) });
+  }
+
+  function resetGameState(){
+    const cw = canvas.width / (window.devicePixelRatio||1);
+    const ch = canvas.height / (window.devicePixelRatio||1);
+    score = 0;
+    pipes = [];
+    rocket = { x: Math.floor(cw*0.28), y: Math.floor(ch/2), vy: 0, size: Math.max(12, Math.floor(cw*0.06)) };
+    frame = 0; playing = false; paused = false; countdown = 3;
+    createStars(); resetSizes();
+  }
+
+  function drawStars(){
+    const cw = canvas.width / (window.devicePixelRatio||1);
+    const ch = canvas.height / (window.devicePixelRatio||1);
+    stars.forEach(s => {
+      ctx.fillStyle = '#9cf';
+      ctx.fillRect(s.x, s.y, s.s, s.s);
+      s.y += 0.35;
+      if(s.y > ch) { s.y = 0; s.x = Math.random()*cw; }
     });
   }
-}
 
-function drawConfetti() {
-  confetti.forEach(cf => {
-    ctx.save();
-    ctx.translate(cf.x, cf.y);
-    ctx.rotate(cf.rot*Math.PI/180);
-    ctx.fillStyle = cf.c;
-    ctx.fillRect(-cf.r/2, -cf.r/2, cf.r, cf.r);
-    ctx.restore();
-    cf.y += cf.vy;
-    cf.x += cf.vx;
-    cf.rot += 10;
-  });
-  confetti = confetti.filter(cf => cf.y < c.height + 10);
-}
-
-function reset(){
-  rocket = { x:80, y:240, vy:0, size:12 };
-  pipes = [];
-  score = 0;
-  gameOver = false;
-  frame = 0;
-  started = false;
-  countdown = 3;
-  recordBroken = false;
-  setTimeout(()=>startCountdown(),100);
-}
-
-function startCountdown(){
-  countdown = 3;
-  const tick = setInterval(()=>{
-    countdown--;
-    if (countdown <= 0){
-      clearInterval(tick);
-      started = true;
-      startTime = Date.now();
-      update();
-    }
-  },1000);
-  drawCountdown();
-}
-
-function drawCountdown(){
-  drawBackground();
-  ctx.fillStyle = '#fff';
-  ctx.font = '48px Inter';
-  ctx.textAlign = 'center';
-  ctx.fillText(countdown, c.width/2, c.height/2);
-  if (countdown>0) setTimeout(drawCountdown, 1000);
-}
-
-function drawBackground(){
-  const grad = ctx.createLinearGradient(0,0,0,c.height);
-  grad.addColorStop(0,'#03142c');
-  grad.addColorStop(1,'#06223f');
-  ctx.fillStyle = grad;
-  ctx.fillRect(0,0,c.width,c.height);
-
-  for (let s of stars) {
-    ctx.fillStyle = 'rgba(255,255,255,0.7)';
-    ctx.beginPath();
-    ctx.arc(s.x, s.y, s.s, 0, Math.PI*2);
-    ctx.fill();
-    s.y += 0.2;
-    if (s.y > c.height) {
-      s.y = -2;
-      s.x = Math.random() * c.width;
-    }
-  }
-}
-
-function drawRocket(){
-  // Gövde
-  ctx.save();
-  ctx.translate(rocket.x, rocket.y);
-  ctx.rotate(rocket.vy/10);
-  const grd = ctx.createLinearGradient(-6,-12,6,12);
-  grd.addColorStop(0,'#60a5fa');
-  grd.addColorStop(1,'#2563eb');
-  ctx.fillStyle = grd;
-  ctx.beginPath();
-  ctx.moveTo(0, -rocket.size);
-  ctx.lineTo(rocket.size, rocket.size);
-  ctx.lineTo(-rocket.size, rocket.size);
-  ctx.closePath();
-  ctx.fill();
-
-  // Alev efekti
-  const flame = ctx.createLinearGradient(0,rocket.size,0,rocket.size+10);
-  flame.addColorStop(0,'#fbbf24');
-  flame.addColorStop(1,'rgba(249,115,22,0)');
-  ctx.fillStyle = flame;
-  ctx.beginPath();
-  ctx.moveTo(0, rocket.size);
-  ctx.lineTo(4, rocket.size+10);
-  ctx.lineTo(-4, rocket.size+10);
-  ctx.closePath();
-  ctx.fill();
-
-  ctx.restore();
-}
-
-function draw(){
-  drawBackground();
-
-  // Borular
-  for (let p of pipes){
-    const pipeGrad = ctx.createLinearGradient(p.x, 0, p.x, c.height);
-    pipeGrad.addColorStop(0, '#16a34a');
-    pipeGrad.addColorStop(1, '#4ade80');
-    ctx.fillStyle = pipeGrad;
-    ctx.shadowColor = '#22c55e';
-    ctx.shadowBlur = 8;
-    ctx.fillRect(p.x, 0, 30, p.top);
-    ctx.fillRect(p.x, p.top + p.gap, 30, c.height - p.top - p.gap);
-    ctx.shadowBlur = 0;
-  }
-
-  drawRocket();
-
-  // Üst bilgi (skor, süre, rekor)
-  elapsed = started ? Math.floor((Date.now() - startTime) / 1000) : 0;
-  ctx.fillStyle = '#e6eef8';
-  ctx.font = '16px Inter';
-  ctx.textAlign = 'left';
-  ctx.fillText(`Skor: ${score}`, 10, 22);
-  ctx.fillText(`En İyi: ${best}`, 130, 22);
-  ctx.fillText(`Süre: ${elapsed}s`, 270, 22);
-
-  drawConfetti();
-}
-
-function update(){
-  if (gameOver || !started) return;
-  frame++;
-
-  // İlk birkaç saniye daha yavaş düşsün
-  let currentGravity = (elapsed < 3) ? gravity * 0.5   : gravity;
-
-  rocket.vy += currentGravity;
-  rocket.y += rocket.vy;
-
-  // Engeller daha seyrek ve arası geniş
-  if (frame % 160 === 0) {
-    const top = Math.random() * 140 + 60;
-    pipes.push({ x: c.width, top, gap: 200 });
-  }
-
-  for (let p of pipes) p.x -= pipeSpeed;
-
-  if (pipes.length && pipes[0].x + 30 < 0) {
-    pipes.shift();
-    score++;
-
-    // Rekor bir kez kırıldığında sadece 1 kere konfeti patlasın
-    if (score > best && !recordBroken) {
-      best = score;
-      recordBroken = true;
-      spawnConfetti();
+  function drawRocket(){
+    if(rocketImgLoaded){
+      const size = rocket.size * 2.2;
+      ctx.drawImage(rocketImg, rocket.x - size/2, rocket.y - size/2, size, size);
+    } else {
+      ctx.fillStyle = '#ffeb3b';
+      ctx.beginPath();
+      ctx.arc(rocket.x, rocket.y, rocket.size, 0, Math.PI*2);
+      ctx.fill();
+      ctx.fillStyle = '#ff8a00';
+      ctx.fillRect(rocket.x - rocket.size/3, rocket.y + rocket.size, rocket.size/1.5, rocket.size/1.5);
     }
   }
 
-  for (let p of pipes) {
-    if (
-      rocket.x + rocket.size > p.x &&
-      rocket.x - rocket.size < p.x + 30 &&
-      (rocket.y - rocket.size < p.top || rocket.y + rocket.size > p.top + p.gap)
-    ) {
-      gameOver = true;
-    }
+  function drawPipes(){
+    pipes.forEach(p => {
+      ctx.fillStyle = '#2ecc71';
+      ctx.fillRect(p.x, 0, p.w, p.top);
+      ctx.fillRect(p.x, p.top + p.gap, p.w, 2000);
+    });
   }
 
-  if (rocket.y + rocket.size > c.height) gameOver = true;
-
-  draw();
-
-  if (!gameOver) requestAnimationFrame(update);
-  else {
-    ctx.fillStyle = 'rgba(0,0,0,0.5)';
-    ctx.fillRect(0,0,c.width,c.height);
+  function drawUI(){
+    const cw = canvas.width / (window.devicePixelRatio||1);
     ctx.fillStyle = '#fff';
-    ctx.textAlign = 'center';
-    ctx.font = '26px Inter';
-    ctx.fillText('Oyun Bitti', c.width/2, 220);
-    ctx.font = '18px Inter';
-    ctx.fillText(`Skor: ${score} | En İyi: ${best}`, c.width/2, 255);
-    ctx.fillText(`Süre: ${elapsed} saniye`, c.width/2, 280);
-    ctx.fillText('Yeniden başlamak için tıkla', c.width/2, 310);
+    ctx.font = 'bold 24px Arial';
+    ctx.textAlign = 'left';
+    ctx.fillText(`Skor: ${score}`, 20, 35);
+    ctx.textAlign = 'right';
+    ctx.fillText(`En İyi: ${best}`, cw - 20, 35);
+    
+    if(countdown > 0 && !playing){
+      const cw2 = canvas.width / (window.devicePixelRatio||1);
+      const ch2 = canvas.height / (window.devicePixelRatio||1);
+      ctx.fillStyle = 'rgba(0,0,0,0.7)';
+      ctx.fillRect(0,0,cw2,ch2);
+      ctx.fillStyle = '#ffeb3b';
+      ctx.font = Math.floor(Math.min(cw2, ch2) / 6) + 'px Arial';
+      ctx.textAlign = 'center';
+      ctx.fillText(countdown, cw2/2, ch2/2 + 10);
+    }
   }
-}
 
-function flap(){
-  if (!started) return;
-  if (gameOver){ reset(); return; }
-  rocket.vy = jump;
-}
+  function drawAll(){
+    const cw = canvas.width / (window.devicePixelRatio||1);
+    const ch = canvas.height / (window.devicePixelRatio||1);
+    ctx.clearRect(0,0,cw,ch);
+    drawStars();
+    drawPipes();
+    drawRocket();
+    drawUI();
+  }
 
-document.addEventListener('keydown', e => { if (e.code === 'Space') flap(); });
-c.addEventListener('mousedown', flap);
+  function updateLoop(ts){
+    if(!lastTime) lastTime = ts;
+    const delta = ts - lastTime;
+    lastTime = ts;
+    
+    if(!playing || paused){ drawAll(); requestAnimationFrame(updateLoop); return; }
 
-reset();
-startCountdown();
+    frame++;
+    rocket.vy += gravity;
+    rocket.y += rocket.vy;
+
+    if(frame - lastSpawnFrame > Math.max(80, Math.floor(120 - (frame/100)))){
+      spawnPipe();
+      lastSpawnFrame = frame;
+    }
+
+    pipes.forEach(p => p.x -= pipeSpeed);
+    if(pipes.length && pipes[0].x + pipes[0].w < 0){
+      pipes.shift();
+      score++;
+      if(score > best){ best = score; localStorage.setItem('flappyBest', best); }
+    }
+
+    for(const p of pipes){
+      const rx = rocket.x, ry = rocket.y, r = rocket.size;
+      const pw = p.w, px = p.x, top = p.top, gap = p.gap;
+      if(rx + r > px && rx - r < px + pw){
+        if(ry - r < top || ry + r > top + gap){ playing = false; }
+      }
+    }
+
+    const ch = canvas.height / (window.devicePixelRatio||1);
+    if(rocket.y - rocket.size > ch){ playing = false; }
+
+    drawAll();
+    if(playing) requestAnimationFrame(updateLoop);
+  }
+
+  function flap(){ if(playing && !paused) rocket.vy = jump; }
+  function startCountdownAndPlay(){
+    resetGameState();
+    let cd = 3;
+    countdown = cd;
+    drawAll();
+    const t = setInterval(()=>{
+      cd--;
+      countdown = cd;
+      drawAll();
+      if(cd <= 0){
+        countdown = 0;
+        playing = true;
+        frame = 0;
+        lastSpawnFrame = -10;
+        pipes = [];
+        for(let i=0;i<2;i++){
+          spawnPipe();
+          pipes[pipes.length-1].x += i * (canvas.width / (window.devicePixelRatio||1) * 0.6);
+        }
+        clearInterval(t);
+        requestAnimationFrame(updateLoop);
+      }
+    }, 800);
+  }
+
+  // EVENT LISTENER'LAR
+  document.getElementById('startBtn').onclick = startCountdownAndPlay;
+  document.getElementById('pauseBtn').onclick = () => { paused = true; };
+  document.getElementById('resumeBtn').onclick = () => {
+    if(!playing) startCountdownAndPlay();
+    else { paused = false; requestAnimationFrame(updateLoop); }
+  };
+
+  window.addEventListener('keydown', (e) => { if(e.code === 'Space'){ e.preventDefault(); flap(); } });
+  canvas.addEventListener('click', flap);
+  canvas.addEventListener('touchstart', (e) => { e.preventDefault(); flap(); }, {passive:false});
+
+  // BAŞLANGIÇ
+  window.addEventListener('load', () => {
+    resetGameState();
+    fitCanvas();
+    createStars();
+    drawAll();
+  });
+
+})();
 </script>
 </body>
 </html>

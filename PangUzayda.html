@@ -1,0 +1,457 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Pika Pong Oyunu - Uzay Edition</title>
+
+<style>
+:root{
+  --table-bg:#001f3f;
+  --accent:#ffeb3b;
+  --gold-border:#ffd700;
+  --muted:#d0d0d0;
+  --transition:260ms;
+}
+
+/* RESET */
+*{box-sizing:border-box;font-family:Inter,Arial,system-ui;margin:0;padding:0}
+
+/* SAYFA ARKA PLANI */
+html,body{
+  height:100%;
+  background:radial-gradient(circle at 30% 30%,#001122,#000000);
+  color:#fff;
+}
+
+/* === TOPBAR === */
+.topbar{
+  position:sticky;
+  top:0;
+  z-index:1500;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:12px 20px;
+  background:rgba(0,0,0,0.55);
+  border-bottom:3px solid var(--accent);
+}
+
+.top-left{display:flex;gap:12px;align-items:center}
+.top-title{font-size:20px;font-weight:800;color:var(--accent)}
+
+.hamburger{
+  width:42px;height:38px;padding:6px;
+  display:flex;flex-direction:column;justify-content:space-between;
+  cursor:pointer;border-radius:6px;
+  background:rgba(0,0,0,0.25);
+  border:2px solid var(--accent);
+}
+.hamburger .bar{
+  height:4px;background:var(--accent);border-radius:3px;
+}
+
+/* === TEMA BUTONU === */
+.theme-toggle{
+  cursor:pointer;padding:6px 10px;border-radius:8px;
+  border:2px solid var(--accent);
+  background:transparent;color:var(--accent);
+  font-size:17px;
+}
+
+/* === YAN MENÜ === */
+.side-menu{
+  position:fixed;top:0;left:-310px;
+  width:300px;height:100%;
+  background:rgba(0,0,0,0.92);
+  color:var(--accent);
+  padding:25px;
+  border-right:3px solid var(--accent);
+  transition:left var(--transition);
+  z-index:2000;
+}
+.side-menu.open{left:0}
+
+.side-menu h2{
+  font-size:22px;margin-bottom:15px;
+  border-bottom:2px solid var(--accent);
+  padding-bottom:6px;
+  cursor:pointer;
+}
+.side-menu ul{list-style:none;padding:0;margin-top:20px}
+.side-menu li{
+  padding:12px 4px;
+  border-bottom:1px solid rgba(255,255,0,0.12);
+}
+.side-menu a{
+  color:var(--accent);
+  text-decoration:none;
+  font-size:18px;
+}
+
+/* === REKLAM ALANLARI === */
+.ad-container{
+  position:fixed;
+  top:50%;
+  transform:translateY(-50%);
+  width:180px;
+  height:75vh;
+  z-index:900;
+  box-shadow:0 0 15px rgba(0,0,0,0.8);
+}
+
+.ad-left{left:10px}
+.ad-right{right:10px}
+
+.ad-box{
+  width:100%;height:100%;
+  border-radius:10px;
+  border:3px solid var(--gold-border);
+  overflow:hidden;
+}
+.ad-box img{
+  width:100%;height:100%;
+  object-fit:cover;
+}
+
+/* Mobil görünüm reklam kapat */
+@media(max-width:1280px){
+  .ad-container{display:none;}
+}
+
+/* === ANA KAPSAYICI === */
+.wrap{
+  width:100%;max-width:1100px;
+  margin:40px auto 70px;
+  padding:0 20px;
+}
+
+/* === PONG ANA KUTU === */
+.pong-box{
+  width:100%;
+  background:radial-gradient(circle at center,#0d47a1,#001122);
+  border-radius:25px;
+  border:4px solid var(--gold-border);
+  padding:25px;
+  box-shadow:0 22px 45px rgba(0,0,0,0.9);
+  text-align:center;
+}
+
+/* PANEL */
+#panel{
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  gap:12px;
+  margin-bottom:15px;
+}
+#score{
+  padding:6px 16px;
+  background:black;
+  border-radius:8px;
+  color:var(--accent);
+  font-size:26px;
+  font-weight:800;
+}
+
+button, select{
+  padding:8px 14px;
+  border:none;
+  border-radius:10px;
+  font-weight:700;
+  font-size:16px;
+  cursor:pointer;
+  background:var(--accent);
+  color:black;
+  box-shadow:0 4px 12px rgba(0,0,0,0.5);
+}
+
+#gameCanvas{
+  background:url('https://i.ibb.co/9VQ5n3G/stars.jpg');
+  background-size:cover;
+  display:block;
+  margin:12px auto;
+  border:2px solid #111;
+}
+
+/* FOOTER */
+footer{
+  margin-top:25px;
+  text-align:center;
+  color:#81d4fa;
+  font-size:14px;
+}
+</style>
+</head>
+<body>
+
+<!-- ========= REKLAM ALANLARI ============ -->
+<div class="ad-container ad-left">
+  <div class="ad-box"><img src="reklam4.png"></div>
+</div>
+<div class="ad-container ad-right">
+  <div class="ad-box"><img src="reklam3.jpeg"></div>
+</div>
+<!-- ========= ORTAYA UZAY FOTO EKLEYECEĞİN YER ============ -->
+<div class="center-space-img">
+    <img 
+        id="mainSpaceImage"
+        style="width:850px;max-width:95%;border-radius:12px;border:3px solid var(--gold-border);">
+
+
+</div>
+
+<!-- ========= ÜST MENÜ ============ -->
+<div class="topbar">
+    <div class="top-left">
+        <div class="hamburger" onclick="toggleMenu()">
+            <div class="bar"></div>
+            <div class="bar"></div>
+            <div class="bar"></div>
+        </div>
+
+        <div class="top-title">Pika Mini Arcade</div>
+    </div>
+
+    <button class="theme-toggle" onclick="toggleTheme()">🌙/☀️</button>
+</div>
+
+<!-- ========= YAN MENÜ ============ -->
+<nav class="side-menu" id="sideMenu">
+    <h2 onclick="toggleMenu()">❌ Menü</h2>
+
+    <ul>
+        <li><a href="index.html">Ana Sayfa</a></li>
+        <li><a href="OyunSlideri.html">Oyun Bilgileri</a></li>
+        <li><a href="iletisim.html">İletişim</a></li>
+    </ul>
+</nav>
+
+
+<!-- ========= PONG KUTUSU ============ -->
+<div class="wrap">
+<div class="pong-box">
+
+    
+    <h1 style="color:var(--accent);margin-bottom:10px;">Pong Uzayda</h1>
+
+    <div id="panel">
+        <span id="score">0 - 0</span>
+
+        <select id="modeSelect">
+            <option value="2">Kolay</option>
+            <option value="3" selected>Orta</option>
+            <option value="4">Zor</option>
+        </select>
+
+        <button onclick="startGame()">Başlat</button>
+        <button onclick="pauseGame()">Duraklat</button>
+        <button onclick="resetGame()">Yeniden</button>
+    </div>
+    <!-- SOL REKLAM -->
+<div class="ad-container ad-left">
+    <div class="ad-box">
+        <img src="reklam4.png"
+             onerror="this.onerror=null; this.src='https://i.ibb.co/9VQ5n3G/stars.jpg';">
+    </div>
+</div>
+
+<!-- SAĞ REKLAM -->
+<div class="ad-container ad-right">
+    <div class="ad-box">
+        <img src="reklam3.jpeg"
+             onerror="this.onerror=null; this.src='https://i.ibb.co/9VQ5n3G/stars.jpg';">
+    </div>
+</div>
+
+<!-- ORTA UZAY FOTOĞRAFI -->
+<div class="center-space-img">
+    <img
+        style="width:850px;max-width:95%;border-radius:12px;border:3px solid var(--gold-border);box-shadow:0 0 25px rgba(0,0,0,.8);">
+</div>
+
+    <canvas id="gameCanvas" width="900" height="500"></canvas><img src="uzay.png" alt="uzay">
+</div>
+
+<footer>© 2025 Pika Mini Arcade — Uzayda Pong Keyfi!</footer>
+</div>
+
+
+<!-- ========== JAVASCRIPT BAŞLANGIÇ ========== -->
+<script>
+/* YAN MENÜ */
+function toggleMenu(){
+    document.getElementById("sideMenu").classList.toggle("open");
+}
+
+/* TEMA DEĞİŞTİRME */
+function toggleTheme(){
+    if(document.body.style.filter === "invert(1)") {
+        document.body.style.filter = "invert(0)";
+    } else {
+        document.body.style.filter = "invert(1)";
+    }
+}
+
+/* ========================
+      🎮 PONG KODLARI
+   ======================== */
+const canvas = document.getElementById("gameCanvas");
+const ctx = canvas.getContext("2d");
+
+let paddleHeight = 100;
+let paddleWidth = 18;
+
+let leftPaddle = { x: 30, y: canvas.height / 2 - 50 };
+let rightPaddle = { x: canvas.width - 50, y: canvas.height / 2 - 50 };
+
+let ball = { x: canvas.width / 2, y: canvas.height / 2, size: 13, dx: 3, dy: 3 };
+
+let leftScore = 0;
+let rightScore = 0;
+
+let running = false;
+
+/* === YÖN TUŞLARI === */
+let movingUp = false;
+let movingDown = false;
+
+document.addEventListener("keydown", (e)=>{
+    if(e.key === "ArrowUp") movingUp = true;
+    if(e.key === "ArrowDown") movingDown = true;
+});
+document.addEventListener("keyup", (e)=>{
+    if(e.key === "ArrowUp") movingUp = false;
+    if(e.key === "ArrowDown") movingDown = false;
+});
+
+/* === PADDLE HAREKETİ === */
+function movePlayerPaddle(){
+    if(movingUp) leftPaddle.y -= 6;
+    if(movingDown) leftPaddle.y += 6;
+
+    leftPaddle.y = Math.max(0, Math.min(canvas.height - paddleHeight, leftPaddle.y));
+}
+
+function drawField(){
+    ctx.fillStyle = "rgba(255,255,255,0.35)";
+    ctx.fillRect(canvas.width/2 - 2, 0, 4, canvas.height);
+}
+
+function drawPaddles(){
+    ctx.fillStyle = "#1e90ff";
+    ctx.fillRect(leftPaddle.x, leftPaddle.y, paddleWidth, paddleHeight);
+
+    ctx.fillStyle = "#ff5252";
+    ctx.fillRect(rightPaddle.x, rightPaddle.y, paddleWidth, paddleHeight);
+}
+
+function drawBall(){
+    ctx.fillStyle = "white";
+    ctx.beginPath();
+    ctx.arc(ball.x, ball.y, ball.size, 0, Math.PI*2);
+    ctx.fill();
+}
+
+function updateScore(){
+    document.getElementById("score").innerText = `${leftScore} - ${rightScore}`;
+}
+
+function moveBall(){
+    ball.x += ball.dx;
+    ball.y += ball.dy;
+
+    if(ball.y < ball.size || ball.y > canvas.height - ball.size){
+        ball.dy *= -1;
+    }
+
+    /* SOL PADDLE ÇARPIŞMA */
+    if(
+        ball.x - ball.size < leftPaddle.x + paddleWidth &&
+        ball.y > leftPaddle.y &&
+        ball.y < leftPaddle.y + paddleHeight
+    ){
+        ball.dx = Math.abs(ball.dx);
+        ball.x = leftPaddle.x + paddleWidth + ball.size;
+    }
+
+    /* SAĞ PADDLE ÇARPIŞMA */
+    if(
+        ball.x + ball.size > rightPaddle.x &&
+        ball.y > rightPaddle.y &&
+        ball.y < rightPaddle.y + paddleHeight
+    ){
+        ball.dx = -Math.abs(ball.dx);
+        ball.x = rightPaddle.x - ball.size;
+    }
+
+    if(ball.x < 0){
+        rightScore++;
+        updateScore();
+        resetBall();
+    }
+    if(ball.x > canvas.width){
+        leftScore++;
+        updateScore();
+        resetBall();
+    }
+}
+
+/* TOP RESET */
+function resetBall(){
+    ball.x = canvas.width / 2;
+    ball.y = canvas.height / 2;
+    ball.dx = Math.random() > 0.5 ? 3 : -3;
+    ball.dy = Math.random() * 6 - 3;
+}
+
+/* BOT */
+function botMovement(){
+    let mode = Number(document.getElementById("modeSelect").value);
+    let botCenter = rightPaddle.y + paddleHeight/2;
+    let delta = ball.y - botCenter;
+    let moveSpeed = Math.min(Math.abs(delta), mode);
+
+    if(delta>0) rightPaddle.y += moveSpeed;
+    else rightPaddle.y -= moveSpeed;
+
+    rightPaddle.y = Math.max(0, Math.min(canvas.height - paddleHeight, rightPaddle.y));
+}
+
+/* ANA OYUN DÖNGÜSÜ */
+function gameLoop(){
+    if(!running) return;
+
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+
+    drawField();
+    drawPaddles();
+    drawBall();
+
+    movePlayerPaddle();
+    botMovement();
+    moveBall();
+
+    requestAnimationFrame(gameLoop);
+}
+
+function startGame(){
+    if(!running){
+        running = true;
+        gameLoop();
+    }
+}
+function pauseGame(){ running = false; }
+function resetGame(){
+    leftScore = 0;
+    rightScore = 0;
+    updateScore();
+    resetBall();
+    running = false;
+}
+
+window.onload = updateScore;
+</script>
+
+</body>
+</html>

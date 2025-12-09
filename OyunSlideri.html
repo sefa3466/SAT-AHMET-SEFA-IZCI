@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Biz Kimiz - Oyun Sitesi</title>
+<style>
+/* ---------------------------------------------------- */
+/* TEMALAR */
+:root{
+  --accent:#ffd800;
+  --bg:#0e0e0e;
+  --card:#151515;
+  --text:#ffffff;
+}
+:root.light{
+  --bg:#f2f2f2;
+  --card:#ffffff;
+  --text:#000;
+  --accent:#c9a300;
+}
+
+body{
+  margin:0;
+  padding:0;
+  background:var(--bg);
+  color:var(--text);
+  font-family:Arial;
+  transition:0.3s;
+}
+
+/* ---------------------------------------------------- */
+/* NAVBAR */
+.navbar{
+  width:100%;
+  height:70px;
+  background:#121212;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:0 22px;
+  position:sticky;
+  top:0;
+  z-index:20;
+  box-shadow:0 0 20px rgba(255,255,0,0.25);
+}
+.navbar span {
+  z-index: 500 !important;
+}
+
+.navbar a{
+  color:var(--accent);
+  font-size:20px;
+  text-decoration:none;
+  font-weight:bold;
+}
+.theme-toggle{
+  cursor:pointer;
+  font-size:22px;
+  color:var(--accent);
+}
+
+/* ---------------------------------------------------- */
+/* HAMBURGER MENU */
+.side-menu{
+  position:fixed;
+  top:0;
+  left:-260px;
+  width:260px;
+  height:100%;
+  background:#111;
+  padding:22px;
+  transition:0.35s;
+  z-index:200;
+}
+.side-menu.open{ left:0; }
+.side-menu h2{
+  color:var(--accent);
+  cursor:pointer;
+}
+.side-menu a{
+  color:var(--accent);
+  font-size:20px;
+  text-decoration:none;
+}
+.side-menu ul li{
+  margin:16px 0;
+}
+
+/* ---------------------------------------------------- */
+/* ANA KART */
+.main-card{
+  width:95%;
+  max-width:1000px;
+  background:var(--card);
+  margin:34px auto;
+  padding:30px;
+  border:2px solid var(--accent);
+  border-radius:18px;
+  box-shadow:0 0 22px rgba(255,255,0,0.25);
+  opacity:0;
+  transform:translateY(40px);
+  animation:fadeIn 0.8s forwards;
+}
+
+@keyframes fadeIn{
+  to{
+    opacity:1;
+    transform:translateY(0);
+  }
+}
+
+/* ---------------------------------------------------- */
+/* 2 SÜTUN OYUN AÇIKLAMALARI */
+.columns{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:24px;
+  margin-top:20px;
+}
+.column-box{
+  background:var(--bg);
+  border:2px solid var(--accent);
+  padding:18px;
+  border-radius:12px;
+}
+.column-box h3{
+  color:var(--accent);
+  margin:6px 0;
+}
+
+/* ---------------------------------------------------- */
+/* FOOTER */
+.footer-info{
+  width:95%;
+  max-width:900px;
+  margin:40px auto;
+  padding:20px;
+  border:2px dashed var(--accent);
+  border-radius:12px;
+  text-align:center;
+}
+
+  /* OYUN GÖRSEL KUTULARI */
+  .game-img{
+    width:100%;
+    height:160px;
+    object-fit:cover;
+    border-radius:10px;
+    border:2px solid var(--accent);
+    margin-bottom:12px;
+  }
+</style>
+</head>
+<body>
+
+<!-- NAVBAR -->
+<div class="navbar">
+  <span onclick="openMenu()" style="cursor:pointer;font-size:26px;color:var(--accent)">☰</span>
+  <span onclick="openMenu()" ...>☰</span>
+  <a href="index.html">Ana Sayfa</a>
+  <span class="theme-toggle" onclick="toggleTheme()">🌙</span>
+</div>
+
+<!-- SIDE MENU -->
+<nav class="side-menu" id="sideMenu" aria-hidden="true">
+  
+  <h2 onclick="closeMenu()"> ❌ Menü </h2>
+  <ul>
+    <li><a href="index.html">Oyunlar</a></li>
+    <li><a href="OyunSlideri.html">Hakkında</a></li>
+    <li><a href="iletisim.html">İletişim</a></li>
+  </ul>
+</nav>
+
+<!-- ANA BÖLÜM -->
+<div class="main-card">
+  <h2 style="color:var(--accent);text-align:center;margin-bottom:10px;">Biz Kimiz?</h2>
+  <p style="font-size:17px;line-height:1.6;">
+    Oyun dünyasına kaliteli, eğlenceli ve tamamen ücretsiz deneyimler kazandırmak için çalışan bağımsız bir geliştirici ekibiyiz.
+    Amacımız; oyuncuların zaman geçirirken keyif aldığı, hızlı açılan, kasmayan ve tüm cihazlarla uyumlu oyunlar üretmektir.
+    Her oyunu kullanıcı geri bildirimlerine göre sürekli geliştiriyor, her gün daha profesyonel içerikler sunmak için çalışıyoruz.
+  </p>
+
+  <h2 style="color:var(--accent);margin-top:26px;">Oyun Açıklamaları</h2>
+
+  <div class="columns">
+
+  <div class="column-box">
+    <h3>⚡ Refleks Testi</h3>
+    <img src="clicktest.png" class="game-img">
+    <p>
+      Refleks Testi, tıklama hızını saniye hassasiyetinde ölçen ve oyuncunun tepki süresini gerçek zamanlı analiz eden hızlı bir refleks oyunu. 
+      Ne kadar hızlı durursan o kadar yüksek skor alır, kendi rekorlarını kırmaya çalışırken eğlenceli bir yarışa girersin.
+    </p>
+  </div>
+
+  <div class="column-box">
+    <h3>🚀 Flappy Roket</h3>
+    <img src="deneme roket2.png" class="game-img">
+    <p>
+      Flappy Roket, engellerin arasından hassas kontrollü bir roketi geçirerek en uzağa gitmeye çalıştığın refleks tabanlı bir beceri oyunu.
+      Roketin ivmesini iyi ayarlayıp ritmi tutturduğunda çok yüksek skorlar yapabilir ve liderliğe oynayabilirsin.
+    </p>
+  </div>
+
+  <div class="column-box">
+    <h3>🔢 Sayı Tahmin Et</h3>
+    <img src="1-100st.png" class="game-img">
+    <p>
+      Sayı Tahmin Et oyunu, sistemin belirlediği gizli sayıyı ipuçlarını takip ederek bulmaya çalıştığın zekâ ve mantık ağırlıklı bir tahmin oyunu.
+      Her tahmininde “daha büyük” veya “daha küçük” yönlendirmeleriyle akıllıca ilerlemen gerekiyor.
+    </p>
+  </div>
+
+  <div class="column-box">
+    <h3>🐍 Yılan Oyunu</h3>
+    <img src="yilantisss.png" class="game-img">
+    <p>
+      Klasik Yılan Oyunu, büyüyen yılanını kontrol ederek ekrandaki yemleri toplamaya çalıştığın nostaljik fakat hızla zorlaşan bir oyun deneyimi sunuyor.
+      Duvarlara veya kendine çarpmadan en yüksek skora ulaşmak için dikkat, refleks ve strateji gerekiyor.
+    </p>
+  </div>
+
+  <div class="column-box">
+    <h3>🃏 Blackjack’in Kralı</h3>
+    <img src="bjfoto.png" class="game-img">
+    <p>
+      Blackjack’in Kralı, 21’e en yakın skoru yaparak rakibi yenmeye çalıştığın strateji, şans ve hesaplama öğelerini bir araya getiren bir kart oyunu.
+      Risk almayı sevenler için hem hızlı hem de heyecanlı bir deneyim sunuyor.
+    </p>
+  </div>
+
+  <div class="column-box">
+    <h3>❄️ Kelime Bulmaca</h3>
+    <img src="kelime6sev.png" class="game-img">
+    <p>
+      Kelime Bulmaca, harfleri doğru sırayla birleştirerek kelimeleri çözmeye çalıştığın ve her doğru cevapla kardan adamı kurtardığın eğlenceli bir zekâ oyunu.
+      Bölümler ilerledikçe kelimeler zorlaşır ve oyun daha da keyifli hâle gelir.
+    </p>
+  </div>
+
+  <div class="column-box">
+    <h3>🎰 Slot Oyunu</h3>
+    <img src="slot foto.png" class="game-img">
+    <p>
+      Slot Oyunu, dönen makaraları durdurarak en iyi kombinasyonları yakalamaya çalıştığın tamamen eğlence amaçlı bir şans oyunu deneyimi sunar.
+      Renkli animasyonlar ve hızlı turlar ile her denemede yeni bir heyecan yaşarsın.
+    </p>
+  </div>
+
+  <div class="column-box">
+    <h3>🏎️ Araba Yarışı</h3>
+    <img src="honda-civic-type-r.jpg" class="game-img">
+    <p>
+      Araba oyunu, yüksek hızda ilerlerken engellerden kaçman gereken, refleks ve kontrol becerilerini test eden dinamik bir sürüş deneyimi sunuyor.
+      Zamanlamayı doğru yaparak uzun mesafelere ulaşabilir ve kendi rekorlarını geliştirebilirsin.
+    </p>
+  </div>
+
+</div>
+
+</div>
+
+<!-- FOOTER -->
+<div class="footer-info">
+  <h3 style="color:var(--accent);margin:6px 0;">Fikir ve Öneri İçin</h3>
+  <p style="margin:0;">pikaoyun@example.com</p>
+</div>
+
+<script>
+/* Menü */
+function openMenu(){ document.getElementById("sideMenu").classList.add("open"); }
+function closeMenu(){ document.getElementById("sideMenu").classList.remove("open"); }
+
+/* Tema */
+function toggleTheme(){
+  document.documentElement.classList.toggle("light");
+  localStorage.setItem("theme",
+    document.documentElement.classList.contains("light") ? "light" : "dark"
+  );
+}
+if(localStorage.getItem("theme") === "light"){
+  document.documentElement.classList.add("light");
+}function openMenu(){ document.getElementById("sideMenu").classList.add("open"); }
+
+</script>
+
+</body>
+</html>

@@ -1,0 +1,803 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>HackerAI - Araba Kaçışı (Full Entegre)</title>
+<style>
+/* ======= Genel Tema (Araba Kaçışı) ======= */
+:root{
+  --bg-color: #1a1a1a;
+  --gold: #ffd700;
+  --player-car: #38bdf8; 
+  --obstacle-car: #ff6b6b; 
+  --path: #3a3a3a; 
+  --path-line: #cccccc; 
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0;
+  font-family: Inter, system-ui, Arial, sans-serif;
+  background: var(--bg-color);
+  color:#ffffff;
+  min-height:100vh;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  padding: 70px 0 40px 0; /* Navbar için üst boşluk */
+  transition: all 0.3s ease;
+  position: relative; 
+}
+
+/* ======= NAVBAR & SIDE MENU ======= */
+.topbar{
+  position:fixed;top:0;left:0;right:0;z-index:3000;
+  display:flex;align-items:center;
+  justify-content:space-between;
+  padding:12px 20px;
+  background:rgba(0,0,0,0.95);
+  border-bottom:2px solid var(--gold);
+  backdrop-filter: blur(20px);
+}
+.top-left{display:flex;gap:15px;align-items:center}
+.hamburger{
+  width:42px;height:38px;padding:6px;
+  display:flex;flex-direction:column;
+  justify-content:space-between;
+  cursor:pointer;border-radius:6px;
+  background:rgba(0,0,0,0.4);
+  border:1px solid rgba(255,215,0,0.4);
+  transition: all 0.2s ease;
+}
+.hamburger:hover{ background:var(--gold); box-shadow: 0 0 12px rgba(255,215,0,0.4); }
+.hamburger:hover div{ background:#000; }
+.hamburger div{ height:3px;background:var(--gold); border-radius:2px; transition: all 0.2s ease; }
+.hero-title{
+  color:var(--gold);
+  font-size:22px;font-weight:800;
+  text-shadow: 0 1px 6px rgba(255,215,0,0.3);
+  margin:0;
+}
+#sideMenu {
+  position: fixed; left: -220px; top: 0; width: 220px; height: 100vh;
+  background: linear-gradient(180deg, rgba(0,0,0,0.98), rgba(18,18,18,0.98));
+  backdrop-filter: blur(20px); border-right: 2px solid rgba(255,215,0,0.4); z-index: 4000;
+  padding: 80px 20px 20px; transition: left 0.3s ease;
+}
+#sideMenu.open { left: 0; }
+.menu-close {
+  position: absolute; top: 20px; right: 15px; background: rgba(255,215,0,0.2); border: 1px solid var(--gold);
+  color: var(--gold); font-size: 22px; cursor: pointer; width: 35px; height: 35px; border-radius: 50%;
+}
+.menu-close:hover { background: var(--gold); color:#000; }
+.menu-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 3500; }
+#sideMenu.open ~ .menu-overlay { display: block; }
+.menu-content{
+        list-style: none; padding: 0; display: flex; flex-direction: column; gap: 10px;
+}
+.menu-content a {
+    display: block; color: #ffffff; text-decoration: none; padding: 14px 20px;
+    border-radius: 10px; border: 1px solid rgba(255,215,0,0.3); font-weight: 600;
+    transition: all 0.2s ease; background:rgba(0,0,0,0.4);
+}
+.menu-content a:hover { background: var(--gold); color: #000; transform: translateX(5px); }
+
+/* ======= REKLAM ALANLARI YENİ DÜZEN (Ortalanmış ve %10 Y Büyümesi) ======= */
+.left-ad, .right-ad {
+  position: fixed;
+  top: 50%; 
+  transform: translateY(-50%); 
+  
+  width: 17.25vw;
+  height: 37.95vh; /* %10 Y Büyümesi */
+  max-width: 180px;
+  max-height: 495px; 
+
+  z-index: 2000;
+}
+.left-ad img, .right-ad img {
+    width: 100%;
+    height: 100%;
+    object-fit: fill; 
+    border-radius: 8px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.7);
+    border: 1px solid rgba(255,215,0,0.4);
+}
+
+.left-ad {
+    left: 40px; 
+    transition: left 0.3s ease;
+}
+#sideMenu.open ~ .left-ad {
+    left: 230px; 
+}
+.right-ad {
+    right: 40px;
+}
+
+@media (max-width: 1300px) { /* Geniş ekranlarda gösterilmesi için sınır yükseltildi */
+    .left-ad, .right-ad { display: none; }
+}
+
+/* Ana İçerik Konumlandırma */
+.main-content {
+  width:100%;
+  padding: 10px 3px 40px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  flex-grow: 1;
+  justify-content: center; 
+}
+
+/* Bilgi Kutusu ve Oyun Paneli max genişliği (Büyütüldü: %90) */
+.info-box{
+  width: min(900vw, 850px); /* %90 Genişlik */
+  background: rgba(0,0,0,0.6);
+  border:2px solid rgba(255,215,0,0.4);
+  padding:14px 22px;
+  border-radius:12px;
+  display:flex;
+  gap:20px;
+  justify-content:space-between;
+  align-items:center;
+  box-shadow: 0 5px 20px rgba(0,0,0,0.8);
+  backdrop-filter: blur(10px);
+  margin-bottom:10px;
+}
+.game-panel{
+  background: rgba(0,0,0,0.7);
+  padding:25px;
+  border-radius:16px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:20px;
+  border: 2px solid rgba(255,215,0,0.4);
+  max-width: 900vw; /* %90 Genişlik */
+  width: 90%;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.9);
+}
+
+/* Canvas Wrap (Daha Büyük Alan) */
+.canvas-wrap{
+  padding:10px;
+  border-radius:14px;
+  background: var(--path);
+  box-shadow: inset 0 0 30px rgba(0,0,0,0.5), 0 10px 40px rgba(0,0,0,0.9);
+  width: 100%;
+  max-width: 800px; /* Yaklaşık 90vw'yi destekleyecek bir max değer */
+  aspect-ratio: 1.1/1; 
+  border: 4px solid rgba(255,215,0,0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+/* Diğer CSS stilleri aynı */
+.info-item strong{ color: var(--gold); margin-right:8px; font-weight:700; }
+
+.controls{ display:flex; gap:12px; justify-content:center; align-items:center; }
+.btn{ /* ... */ color:#fff; background:var(--gold); padding: 12px 24px; border:none; border-radius:8px; cursor:pointer; font-weight:700; transition: all 0.2s; box-shadow: 0 4px 10px rgba(0,0,0,0.4); }
+.btn:hover{ opacity:0.9; }
+.btn:disabled{ opacity:0.5; cursor:not-allowed; }
+.btn.secondary{ background: #555; }
+.btn.negative{ background: #a55; }
+.description{
+  width:100%;
+  background: rgba(0,0,0,0.5);
+  border:1px solid rgba(255,215,0,0.2);
+  padding:14px;
+  border-radius:10px;
+  color:#ffffff;
+  font-size:15px;
+  line-height:1.6;
+  text-align: center;
+}
+.game-over { box-shadow: 0 0 30px #ff6b6b !important; }
+
+@media(max-width:600px){
+  .info-box{ flex-direction:column; gap:8px; padding:12px; max-width: 100vw; }
+  .game-panel{ padding:20px; max-width: 100vw; }
+  .canvas-wrap{ padding: 5px; }
+  .controls{ flex-wrap: wrap; }
+}
+</style>
+</head>
+<body>
+
+<!-- ... NAVBAR ... -->
+<div class="topbar">
+  <div class="top-left">
+    <div class="hamburger" onclick="toggleMenu()">
+      <div></div><div></div><div></div>
+    </div>
+    <h1 class="hero-title">🚗 Araba Kaçışı</h1>
+  </div>
+</div>
+
+<div id="sideMenu">
+  <button class="menu-close" onclick="toggleMenu()">&times;</button>
+  <ul class="menu-content">
+   <li onclick="goTo('#games')"><a href="index.html">Oyunlar </a></li>
+      <li onclick="goTo('#about')"><a href="OyunSlideri.html">Hakkında</a></li>
+      <li onclick="goTo('#contact')"><a href="iletisim.html">İletişim</a></li>
+  </ul>
+</div>
+<div class="menu-overlay" onclick="toggleMenu()"></div>
+
+<!-- LEFT AD -->
+<aside class="left-ad" id="leftAd">
+  <img src="reklam4.png" alt="Reklam Sol">
+</aside>
+
+<!-- RIGHT BIG AD -->
+<aside class="right-ad" id="rightAd">
+  <img src="reklam4.png" alt="Reklam Sağ">
+</aside>
+
+
+<div class="main-content">
+  <div class="info-box" role="status" aria-live="polite">
+    <div class="info-item"><strong>⏱️</strong>Süre: <span id="timeDisplay">0.0</span>s</div>
+    <div class="info-item"><strong>🏆</strong>Rekor: <span id="bestDisplay">0.0</span>s</div>
+  </div>
+
+  <div class="game-panel" role="application" aria-label="Araba Kaçışı Oyunu Paneli">
+    <div class="canvas-wrap" id="canvasWrap">
+      <canvas id="gameCanvas" width="800" height="533" aria-label="Oyun Ekranı"></canvas>
+    </div>
+
+    <div class="controls" role="region" aria-label="Oyun Kontrolleri">
+      <button class="btn" id="startBtn">▶️ BAŞLAT</button>
+      <button class="btn secondary" id="pauseBtn">⏸️ DURAKLAT</button>
+      <button class="btn negative" id="restartBtn">🔄 YENİDEN</button>
+    </div>
+
+    <div class="description" id="desc">
+      **Kural:** Arabayı **A (sola)** ve **D (sağa)** tuşları ile kontrol et, düşman araçlardan kaç! Arabalar her 5 saniyede bir %1 oranında büyür. **10 saniye hareketsiz kalırsan oyun biter!**
+    </div>
+  </div>
+</div>
+
+<script>
+/* ======= JS FONKSİYONLARI (Menü, CSS, Random) ======= */
+function toggleMenu() { 
+    document.getElementById("sideMenu").classList.toggle("open");
+}
+function varToCSS(name) { return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
+function randInt(max){ return Math.floor(Math.random()*max); }
+function chooseRand(arr, n) { 
+    let result = [];
+    let temp = [...arr];
+    for (let i = 0; i < n; i++) {
+        let index = randInt(temp.length);
+        result.push(temp.splice(index, 1)[0]);
+    }
+    return result;
+}
+
+/* =========================
+   OYUN LOGİĞİ - CAR DODGE
+   ========================= */
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+const timeDisplay  = document.getElementById('timeDisplay');
+const bestDisplay  = document.getElementById('bestDisplay');
+const startBtn   = document.getElementById('startBtn');
+const pauseBtn   = document.getElementById('pauseBtn');
+const restartBtn = document.getElementById('restartBtn');
+const canvasWrap = document.getElementById('canvasWrap');
+
+let W = 800;
+let H = 533;
+let running = false;
+let paused = false;
+let dead = false;
+
+// Zaman ve Skor
+let seconds = 0;
+let best = Number(localStorage.getItem('car_dodge_best')) || 0;
+let timeInterval = null;
+let lastGrowTime = 0; 
+let lastMovementTime = 0; // Hareketsizlik takibi için eklendi
+let idleWarning = false;   // Hareketsizlik uyarısı için eklendi
+
+// Arabalar
+const playerCar = {
+    w: 40, // Değerler önceki versiyona geri döndü
+    h: 55, 
+    x: 0,
+    y: 0,
+    vx: 0,
+    speed: 4, 
+    maxW: 0, 
+    baseW: 40, 
+    baseH: 55, 
+};
+
+const PLAYER_START_Y_RATIO = 0.8; 
+const LANE_COUNT = 5; 
+let LANE_WIDTH = W / LANE_COUNT;
+const BASE_OBSTACLE_W = 35; 
+const BASE_OBSTACLE_H = 55;
+
+// Engeller
+let obstacles = [];
+let obstacleFallSpeed = 2; // Başlangıç hızı önceki versiyona geri döndü
+let obstacleSpawnInterval = 1200; 
+let lastObstacleTime = 0;
+let speedIncreaseTimer = 0;
+
+bestDisplay.textContent = best.toFixed(1);
+
+/* ====== CANVAS INIT & RESIZE ====== */
+function resizeCanvas() {
+    // Canvas Wrap'ın boyutunu al
+    const parentWidth = canvasWrap.clientWidth;
+    const parentHeight = canvasWrap.clientHeight;
+
+    // Oran: 1.1 yatayda, 1 dikeyde
+    let targetW = parentWidth; 
+    let targetH = parentWidth / 1.1;
+    
+    // Eğer dikeyde sığmıyorsa dikeyden kısıtla
+    if (targetH > parentHeight) { 
+      targetH = parentHeight;
+      targetW = targetH * 1.1;
+    }
+    
+    // Canvas boyutlarını 1.1:1 oranına göre ayarla
+    W = targetW;
+    H = targetH;
+    
+    canvas.width = W;
+    canvas.height = H;
+    
+    LANE_WIDTH = W / LANE_COUNT; 
+
+    // Maksimum genişlik: Şeridin %95'i (çizgilere yakın, taşırmayacak)
+    playerCar.maxW = LANE_WIDTH * 0.95; 
+    
+    // Anlık boyutları güncel max'a göre sınırla ve yeniden konumlandır
+    playerCar.w = Math.min(playerCar.w, playerCar.maxW);
+    playerCar.h = playerCar.w / playerCar.baseW * playerCar.baseH; 
+
+    let initialLane = 2; 
+    // Pozisyonu şeritin ortasına ayarla
+    playerCar.x = LANE_WIDTH * initialLane + LANE_WIDTH / 2 - playerCar.w / 2;
+    playerCar.y = H * PLAYER_START_Y_RATIO - playerCar.h;
+
+    // Engellerin boyutlarını ve konumlarını yeniden ayarla
+    obstacles.forEach(obs => {
+        obs.maxW = LANE_WIDTH * 0.95;
+        obs.w = Math.min(obs.w, obs.maxW);
+        obs.h = obs.w / BASE_OBSTACLE_W * BASE_OBSTACLE_H;
+        const lane = Math.floor(obs.x / LANE_WIDTH); 
+        obs.x = LANE_WIDTH * lane + LANE_WIDTH / 2 - obs.w / 2;
+    });
+
+    if (!running && !paused && !dead) initialDraw();
+}
+
+window.addEventListener('resize', resizeCanvas);
+
+
+function updateGame(deltaTime) {
+    if (!running || paused || dead) return;
+
+    // Yatay Hareket
+    playerCar.x += playerCar.vx;
+    
+    // Duvar Sınırları
+    playerCar.x = Math.max(0, Math.min(W - playerCar.w, playerCar.x));
+    
+    const now = performance.now();
+
+    // ======= HAREKETSİZLİK KONTROLÜ (5s uyarı, 10s bitiş) =======
+    const idleTime = now - lastMovementTime;
+    
+    if (idleTime >= 10000) { // 10 saniye hareketsizlik = Oyun Bitti
+        return triggerGameOver("Hareketsizlik kuralını ihlal ettiniz!");
+    } else if (idleTime >= 5000) { // 5 saniye hareketsizlik = Uyarı
+        idleWarning = true;
+    } else {
+        idleWarning = false;
+    }
+    // =============================================================
+
+
+    // Dinamik Büyüme (5 saniyede bir %1 oranında)
+    if(now - lastGrowTime >= 5000) { 
+        // %1 Artış Oranı
+        const growthFactor = 1.01; 
+
+        // Oyuncu Arabayı Büyüt
+        const newPlayerW = playerCar.w * growthFactor;
+        if (newPlayerW <= playerCar.maxW) { 
+            const growAmount = newPlayerW - playerCar.w;
+            playerCar.w = newPlayerW;
+            playerCar.h = playerCar.w / playerCar.baseW * playerCar.baseH;
+            playerCar.x -= growAmount / 2; 
+            playerCar.y = H * PLAYER_START_Y_RATIO - playerCar.h;
+        }
+
+        // Engel Arabaları Büyüt
+        obstacles.forEach(obs => {
+            const newObsW = obs.w * growthFactor;
+            if (newObsW <= obs.maxW) {
+                const growAmount = newObsW - obs.w;
+                const lane = Math.floor(obs.x / LANE_WIDTH); 
+                obs.w = newObsW;
+                obs.h = obs.w / BASE_OBSTACLE_W * BASE_OBSTACLE_H;
+                obs.x = LANE_WIDTH * lane + LANE_WIDTH / 2 - obs.w / 2;
+            }
+        });
+
+        lastGrowTime = now;
+    }
+
+
+    // Hız Artışı (Kademeli Zorluk)
+    speedIncreaseTimer += deltaTime;
+    if(speedIncreaseTimer >= 4000) { // Eski 4s kuralı
+        obstacleFallSpeed += 0.2;
+        obstacleSpawnInterval = Math.max(500, obstacleSpawnInterval - 50);
+        speedIncreaseTimer = 0;
+    }
+
+    // Engel Yaratma
+    if (now - lastObstacleTime > obstacleSpawnInterval) {
+        spawnObstacles();
+        lastObstacleTime = now;
+    }
+
+    // Engelleri Hareket Ettir ve Çarpışma Kontrolü
+    for (let i = obstacles.length - 1; i >= 0; i--) {
+        const obs = obstacles[i];
+        obs.y += obstacleFallSpeed;
+
+        // Çarpışma Kontrolü (AABB)
+        if (
+            playerCar.x < obs.x + obs.w &&
+            playerCar.x + playerCar.w > obs.x &&
+            playerCar.y < obs.y + obs.h &&
+            playerCar.y + playerCar.h > obs.y
+        ) {
+            return triggerGameOver("Düşman arabaya çarptınız!");
+        }
+
+        // Ekran Dışına Çıkanı Sil
+        if (obs.y > H) {
+            obstacles.splice(i, 1);
+        }
+    }
+
+    render();
+}
+
+
+/**
+ * 2 Satır halinde, rastgele 3 sütunun boş olduğu engel bloğu yarat
+ */
+function spawnObstacles() {
+    const obstacleLanes = [0, 1, 2, 3, 4];
+    const openLanes = chooseRand(obstacleLanes, 3);
+    const closedLanes = obstacleLanes.filter(l => !openLanes.includes(l));
+    
+    // Anlık büyüklüğe göre boyutları ayarla
+    const actualWidth = playerCar.w; 
+    const actualHeight = playerCar.h; 
+    
+    for(let r = 0; r < 2; r++) { // 2 Satır Engel
+        const rowGap = actualHeight * 2; // Önceki koda yakın değerler
+        const startY = -actualHeight - (rowGap * r); 
+        
+        closedLanes.forEach(lane => {
+            // Engel arabasının pozisyonu: şeridin ortası
+            const startX = LANE_WIDTH * lane + LANE_WIDTH / 2 - actualWidth / 2;
+            
+            obstacles.push({
+                x: startX,
+                y: startY, 
+                w: actualWidth,
+                h: actualHeight,
+                maxW: LANE_WIDTH * 0.95, // Max boyutu tanımla
+                color: varToCSS('--obstacle-car')
+            });
+        });
+    }
+}
+
+function render() {
+    ctx.clearRect(0, 0, W, H);
+    ctx.fillStyle = varToCSS('--path'); 
+    
+    const roadLineOffset = (performance.now() * obstacleFallSpeed * 0.1) % (H / 2);
+    
+    ctx.fillRect(0, 0, W, H);
+
+    // Şerit Ayırıcılar
+    ctx.strokeStyle = varToCSS('--path-line');
+    ctx.lineWidth = 4;
+    for (let i = 1; i < LANE_COUNT; i++) {
+        const x = LANE_WIDTH * i;
+        ctx.beginPath();
+        ctx.setLineDash([20, 20]); 
+        ctx.lineDashOffset = -roadLineOffset;
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, H);
+        ctx.stroke();
+    }
+    ctx.setLineDash([]); 
+    ctx.lineDashOffset = 0; 
+
+    // Engeller (Kırmızı Arabalar)
+    obstacles.forEach(obs => {
+        drawCar(obs.x, obs.y, obs.w, obs.h, varToCSS('--obstacle-car'), false);
+    });
+
+    // Oyuncu Arabası (Mavi)
+    drawCar(playerCar.x, playerCar.y, playerCar.w, playerCar.h, varToCSS('--player-car'), true);
+
+
+    // ======= HAREKETSİZLİK UYARISI ÇİZİMİ (5s-10s arası) =======
+    if (idleWarning) {
+        const timeRemaining = (10000 - (performance.now() - lastMovementTime)) / 1000;
+        ctx.save();
+        ctx.textAlign = 'center';
+        ctx.fillStyle = 'rgba(255, 215, 0, 0.9)';
+        ctx.font = 'bold 24px Inter, Arial';
+        ctx.fillText(`🚨 HAREKET ET! ${Math.floor(timeRemaining)}s Kaldı 🚨`, W / 2, H * 0.1);
+        ctx.restore();
+    }
+    // =============================================================
+
+
+    if (paused) {
+        ctx.save();
+        ctx.fillStyle = 'rgba(0,0,0,0.8)';
+        ctx.fillRect(0, 0, W, H);
+        ctx.shadowColor = 'rgba(255,215,0,0.8)';
+        ctx.shadowBlur = 20;
+        ctx.textAlign = 'center';
+        ctx.fillStyle = '#ffd700';
+        ctx.font = 'bold 30px Inter, Arial';
+        ctx.fillText('⏸️ DURAKLATILDI', W / 2, H / 2);
+        ctx.restore();
+    }
+}
+
+/**
+ * Basit Araba Çizim Fonksiyonu
+ */
+function drawCar(x, y, w, h, color, isPlayer) {
+    ctx.save();
+    ctx.translate(x, y); 
+    
+    // Gövde
+    ctx.fillStyle = color;
+    ctx.fillRect(0, 0, w, h);
+
+    // Işık / Cam
+    ctx.fillStyle = isPlayer ? '#ffffff' : 'rgba(0,0,0,0.6)'; 
+    ctx.fillRect(w * 0.1, h * 0.1, w * 0.8, h * 0.3);
+
+    // Tekerler (Siyah)
+    ctx.fillStyle = '#0a0a0a';
+    const wheelW = Math.max(3, w * 0.08); 
+    ctx.fillRect(-wheelW, h * 0.1, wheelW * 2, h * 0.2); 
+    ctx.fillRect(-wheelW, h * 0.7, wheelW * 2, h * 0.2); 
+    ctx.fillRect(w - wheelW, h * 0.1, wheelW * 2, h * 0.2); 
+    ctx.fillRect(w - wheelW, h * 0.7, wheelW * 2, h * 0.2); 
+    
+    // Gölge efekti 
+    if(isPlayer) {
+        ctx.shadowColor = 'rgba(56, 189, 248, 0.5)';
+        ctx.shadowBlur = 10;
+        ctx.fill();
+    }
+
+    ctx.restore(); 
+}
+
+
+function loop(timestamp) {
+    if (!running) return;
+
+    if (!paused) {
+        const deltaTime = timestamp - (loop.lastTime || timestamp);
+        updateGame(deltaTime);
+    }
+    loop.lastTime = timestamp;
+
+    requestAnimationFrame(loop);
+}
+
+function startTimer() {
+    clearInterval(timeInterval);
+    timeInterval = setInterval(() => {
+        if(running && !paused && !dead) {
+            seconds += 0.1;
+            timeDisplay.textContent = seconds.toFixed(1);
+        }
+    }, 100);
+}
+
+
+/* ====== Kontroller ====== */
+document.addEventListener('keydown', (e) => {
+    if(running && !paused && !dead) {
+        // Hareketsizlik sayacını sıfırla
+        if(e.key === 'a' || e.key === 'A' || e.key === 'd' || e.key === 'D') {
+            lastMovementTime = performance.now();
+            idleWarning = false;
+        }
+
+        if(e.key === 'a' || e.key === 'A') {
+            e.preventDefault();
+            playerCar.vx = -playerCar.speed;
+        } else if(e.key === 'd' || e.key === 'D') {
+            e.preventDefault();
+            playerCar.vx = playerCar.speed;
+        }
+    }
+    if ((e.key === ' ') || (e.key === 'Spacebar')) {
+        e.preventDefault(); 
+        if (!running) return startBtnAction();
+        if (!dead && running && paused) return resumeAction();
+        if (!dead && running && !paused) return pauseAction();
+    }
+});
+
+document.addEventListener('keyup', (e) => {
+    if(e.key === 'a' || e.key === 'A' || e.key === 'd' || e.key === 'D') {
+        playerCar.vx = 0;
+    }
+});
+
+
+/* ====== Aksiyonlar ====== */
+function initGame(){
+    seconds = 0;
+    timeDisplay.textContent = seconds.toFixed(1);
+    obstacles = [];
+    obstacleFallSpeed = 2; // Başlangıç hızı
+    obstacleSpawnInterval = 1200;
+    speedIncreaseTimer = 0;
+    lastGrowTime = performance.now(); 
+    lastMovementTime = performance.now(); // Başlangıçta hareket başladı kabul et
+    idleWarning = false;
+
+    paused = false; dead = false; running = true;
+    
+    // Başlangıç boyutlarını ve konumu ayarla
+    playerCar.w = playerCar.baseW;
+    playerCar.h = playerCar.baseH;
+    playerCar.maxW = LANE_WIDTH * 0.95; // Max genişliği ayarla
+    
+    let initialLane = 2; 
+    playerCar.x = LANE_WIDTH * initialLane + LANE_WIDTH / 2 - playerCar.w / 2;
+    playerCar.y = H * PLAYER_START_Y_RATIO - playerCar.h;
+
+    startTimer();
+    loop.lastTime = performance.now();
+    requestAnimationFrame(loop);
+
+    canvasWrap.classList.remove('game-over');
+    pauseBtn.disabled = false;
+    startBtn.disabled = true;
+}
+
+function startBtnAction(){
+    if (dead) return restartAction();
+    if (!running) return initGame();
+}
+
+function pauseAction(){
+    if (!running || paused || dead) return;
+    paused = true;
+    // lastMovementTime, paused durumunda güncellenmemeli
+    // render'da duraklatma ekranı çizilirken
+    // Hareketsizlik kontrolü updateGame içinde olduğu için pause'da durur.
+    render(); 
+    pauseBtn.textContent = '▶️ DEVAM ET';
+}
+
+function resumeAction(){
+    if (!running || !paused || dead) return;
+    paused = false;
+    lastMovementTime = performance.now(); // Devam ettiğinde de sıfırla
+    pauseBtn.textContent = '⏸️ DURAKLAT';
+    loop.lastTime = performance.now(); 
+    requestAnimationFrame(loop)
+}
+
+function restartAction(){
+    clearInterval(timeInterval);
+    resizeCanvas();
+    initGame();
+    pauseBtn.textContent = '⏸️ DURAKLAT';
+}
+startBtn.addEventListener('click', startBtnAction);
+pauseBtn.addEventListener('click', () => {
+    if (paused) resumeAction();
+    else pauseAction();
+});
+restartBtn.addEventListener('click', restartAction);
+
+function triggerGameOver(reason = "Bilinmeyen bir sebeple oyun sona erdi!"){
+    running = false; dead = true;
+    clearInterval(timeInterval);
+
+    if(seconds > best){
+        best = seconds;
+        localStorage.setItem('car_dodge_best', best);
+        bestDisplay.textContent = best.toFixed(1);
+    }
+    
+    ctx.save();
+    ctx.fillStyle = 'rgba(0,0,0,0.9)';
+    ctx.fillRect(0, 0, W, H);
+    ctx.shadowColor = '#ff6b6b';
+    ctx.shadowBlur = 10;
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#ff6b6b';
+    ctx.font = 'bold 36px Inter, Arial';
+    ctx.fillText('💥 OYUN BİTTİ!', W/2, H/2 - 35);
+    
+    ctx.shadowBlur = 0;
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'normal 18px Inter, Arial';
+    ctx.fillText(reason, W/2, H/2 + 5); 
+    
+    ctx.font = 'bold 20px Inter, Arial';
+    ctx.fillText(`Kaçış Süresi: ${seconds.toFixed(1)}s`, W/2, H/2 + 45);
+    ctx.restore();
+    
+    canvasWrap.classList.add('game-over');
+    pauseBtn.disabled = true;
+    startBtn.disabled = false;
+    startBtn.textContent = '▶️ YENİDEN BAŞLAT';
+}
+
+
+function initialDraw(){
+    ctx.clearRect(0,0,W,H);
+    ctx.fillStyle = varToCSS('--path');
+    ctx.fillRect(0,0,W,H);
+    
+    // Şeritler
+    ctx.strokeStyle = 'rgba(255,215,0,0.1)';
+    ctx.lineWidth = 2;
+    for (let i = 1; i < LANE_COUNT; i++) {
+        const x = LANE_WIDTH * i;
+        ctx.beginPath();
+        ctx.setLineDash([10, 8]);
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, H);
+        ctx.stroke();
+    }
+    ctx.setLineDash([]); 
+
+    ctx.shadowColor = 'rgba(255,215,0,0.5)';
+    ctx.shadowBlur = 15;
+    ctx.fillStyle = '#ffd700';
+    ctx.font = 'bold 28px Inter, Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText('🚗 Araba Kaçışı Oyunu', W/2, H/2 - 30);
+    ctx.shadowBlur = 0;
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 16px Inter, Arial';
+    ctx.fillText('Başlamak için BAŞLAT veya SPACE tuşuna bas!', W/2, H/2 + 5);
+}
+
+window.onload = function() {
+    resizeCanvas();
+    initialDraw();
+};
+</script>
+</body>
+</html>

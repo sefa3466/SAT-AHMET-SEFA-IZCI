@@ -1,0 +1,836 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Pika — Yılan Oyunu (Premium)</title>
+<style>
+/* ======= Genel Tema (Pika) ======= */
+:root{
+  --bg1: #1a1a1a;
+  --bg2: #121212;
+  --accent: #ffeb3b;
+  --muted: #81d4fa;
+  --panel: rgba(255,255,255,0.06);
+  --gold: #ffd700;
+  --dark-gold: #d4af37;
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0;
+  font-family: Inter, system-ui, Arial, sans-serif;
+  background: #000;
+  color:#ffffff;
+  -webkit-font-smoothing:antialiased;
+  -moz-osx-font-smoothing:grayscale;
+  min-height:100vh;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  padding:0;
+  transition: all 0.3s ease;
+}
+
+/* ======= FULLSCREEN NAVBAR ======= */
+.topbar{
+  position:fixed;top:0;left:0;right:0;z-index:3000;
+  display:flex;align-items:center;
+  justify-content:space-between;
+  padding:12px 20px;
+  background:rgba(0,0,0,0.95);
+  border-bottom:2px solid var(--gold);
+  backdrop-filter: blur(20px);
+}
+.top-left{display:flex;gap:15px;align-items:center}
+.hamburger{
+  width:42px;height:38px;padding:6px;
+  display:flex;flex-direction:column;
+  justify-content:space-between;
+  cursor:pointer;border-radius:6px;
+  background:rgba(0,0,0,0.4);
+  border:1px solid rgba(255,215,0,0.4);
+  transition: all 0.2s ease;
+}
+.hamburger:hover{ 
+  background:var(--gold);
+  box-shadow: 0 0 12px rgba(255,215,0,0.4);
+}
+.hamburger:hover div{ background:#000; }
+.hamburger div{
+  height:3px;background:var(--gold);
+  border-radius:2px;
+  transition: all 0.2s ease;
+}
+.hero-title{
+  color:var(--gold);
+  font-size:22px;font-weight:800;
+  text-shadow: 0 1px 6px rgba(255,215,0,0.3);
+  margin:0;
+}
+
+/* ======= %20 WIDTH SIDE MENU ======= */
+#sideMenu {
+  position: fixed;
+  left: -20%;
+  top: 0;
+  width: 20%;
+  min-width: 220px;
+  height: 100vh;
+  background: linear-gradient(180deg, rgba(0,0,0,0.98), rgba(18,18,18,0.98));
+  backdrop-filter: blur(20px);
+  border-right: 2px solid rgba(255,215,0,0.4);
+  z-index: 4000;
+  padding: 80px 20px 20px;
+  transition: left 0.3s ease;
+}
+#sideMenu.open { left: 0; }
+.menu-content {
+  display:flex;
+  flex-direction:column;
+  gap:15px;
+}
+.menu-title {
+  color:var(--gold);
+  font-size:28px;
+  font-weight:800;
+  text-align:center;
+  margin-bottom:8px;
+}
+.menu-item {
+  display: block;
+  color: #ffffff;
+  text-decoration: none;
+  padding: 14px 20px;
+  border-radius: 10px;
+  border: 1px solid rgba(255,215,0,0.3);
+  font-weight: 600;
+  font-size:16px;
+  transition: all 0.2s ease;
+  background:rgba(0,0,0,0.4);
+}
+.menu-item:hover {
+  background: var(--gold);
+  color: #000;
+  transform: translateX(5px);
+}
+.menu-close {
+  position: absolute;
+  top: 20px;
+  right: 15px;
+  background: rgba(255,215,0,0.2);
+  border: 1px solid var(--gold);
+  color: var(--gold);
+  font-size: 22px;
+  cursor: pointer;
+  width: 35px;
+  height: 35px;
+  border-radius: 50%;
+}
+.menu-close:hover { background: var(--gold); color:#000; }
+
+/* Overlay for menu */
+.menu-overlay {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.6);
+  z-index: 3500;
+}
+#sideMenu.open ~ .menu-overlay { display: block; }
+
+/* Ana içerik */
+.main-content {
+  padding-top:90px;
+  width:150%;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  padding-bottom:40px;
+}
+
+/* Üst Menü */
+.top-menu {
+    width: min(1000px, 95%);
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    margin:20px 0;
+}
+.top-menu a {
+    color: #ffffff;
+    text-decoration: none;
+    padding: 10px 18px;
+    border: 1px solid rgba(255,215,0,0.4);
+    border-radius: 8px;
+    font-size: 15px;
+    font-weight: 600;
+    transition: all 0.2s ease;
+    background: rgba(0,0,0,0.5);
+}
+.top-menu a:hover {
+    background: var(--gold);
+    color: #000;
+    border-color: var(--gold);
+}
+
+/* Üst bilgi kutusu */
+.info-box{
+  width: min(1000px, 95%);
+  max-width:1000px;
+  background: rgba(0,0,0,0.6);
+  border:2px solid rgba(255,215,0,0.4);
+  padding:14px 22px;
+  border-radius:12px;
+  display:flex;
+  gap:12px;
+  justify-content:space-between;
+  align-items:center;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.8);
+  backdrop-filter: blur(10px);
+  margin-bottom:20px;
+}
+.info-item { font-size:16px; color:#e0e0e0; }
+.info-item strong{ color: var(--gold); margin-right:8px; font-weight:700; }
+
+/* Layout - OYUN TAM ORTADA, REKLAMLAR UZAK */
+.layout {
+  width: 100%;
+  max-width: 160000px;
+  display:flex;
+  gap: 40px;
+  align-items:flex-start;
+  justify-content:center;
+  padding:0 8%;
+}
+
+/* Reklamlar UZAK VE KÜÇÜK */
+.ad-container {
+  position: relative;
+  width: 65px;
+  height: 650px;
+  flex: 0 0 200px;
+  margin-top: 40px;
+  transition: all .2s ease;
+}
+.ad-left{ order: 0; }
+.ad-right{ order: 2; }
+.ad-box{
+  width: 100%;
+  height: 100%;
+  border-radius:9px;
+  border:1px solid rgba(255,215,0,0.3);
+  overflow:hidden;
+  cursor:pointer;
+  box-shadow: 4px 8px 15px rgba(0,0,0,0.6);
+}
+.ad-box:hover{ transform: scale(1.02); }
+.ad-box img{ 
+  width:100%; 
+  height:100%; 
+  object-fit:cover; 
+}
+
+@media(max-width:768px){
+  .layout{ padding:0 5%; gap:20px; }
+  .ad-container{ width:55px; height:55px; margin-top:10px; }
+}
+
+/* Oyun paneli - TAM ORTADA BÜYÜK */
+.game-panel{
+  background: rgba(0,0,0,0.7);
+  padding:2px;
+  border-radius:1px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:10px;
+  border: 3px solid rgba(255,215,0,0.3);
+  flex-grow: 3;
+  max-width: 1100px;
+  width: 100%;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.9);
+}
+
+/* Canvas - BÜYÜK VE NET */
+.canvas-wrap{
+  padding:1px;
+  border-radius:11px;
+  background: rgba(0,0,0,0.8);
+  box-shadow: inset 0 0 30px rgba(0,0,0,0.5), 0 15px 50px rgba(0,0,0,0.9);
+  width: 100%;
+  max-width: 850px;
+  aspect-ratio: 1 / 1;
+  border: 2px solid rgba(255,215,0,0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+canvas{
+  display:block;
+  background: #0a0a0a;
+  border-radius:12px;
+  border: 3px solid rgba(255,215,0,0.2);
+  width: 95%;
+  height: 95%;
+  max-width: 900px;
+  box-shadow: 0 12px 45px rgba(0,0,0,0.8);
+}
+
+/* Kontroller */
+.controls{
+  display:flex;
+  gap:12px;
+  flex-wrap:wrap;
+  justify-content:center;
+  align-items:center;
+}
+
+/* Butonlar */
+.btn{
+  background: #1a1a1a;
+  color: #ffffff;
+  border: 2px solid rgba(255,215,0,0.4);
+  padding:12px 18px;
+  border-radius:10px;
+  font-weight:700;
+  cursor:pointer;
+  box-shadow: 0 8px 25px rgba(0,0,0,0.8);
+  transition: all .2s ease;
+  font-size:15px;
+}
+.btn:hover{ 
+  transform: translateY(-2px); 
+  box-shadow: 0 12px 30px rgba(255,215,0,0.3);
+  border-color: var(--gold);
+}
+.btn.secondary{
+  background: #222;
+  color: #cccccc;
+  border-color: rgba(255,215,0,0.3);
+}
+.btn.negative{
+  background: #333;
+  color:#ff6b6b;
+  border-color: rgba(255,107,107,0.5);
+}
+
+/* Açıklama */
+.description{
+  width:100%;
+  background: rgba(0,0,0,0.5);
+  border:1px solid rgba(255,215,0,0.2);
+  padding:14px;
+  border-radius:10px;
+  color:#ffffff;
+  font-size:15px;
+  line-height:1.6;
+  text-align: center;
+}
+
+/* Footer */
+footer{
+  margin-top:25px;
+  padding:15px;
+  width:100%;
+  max-width:1200px;
+  text-align:center;
+  color:#cccccc;
+  background: rgba(0,0,0,0.7);
+  border:1px solid rgba(255,215,0,0.2);
+  border-radius:10px;
+}
+
+@keyframes shake {
+  0% { transform: translateX(0); }
+  20% { transform: translateX(-8px); }
+  40% { transform: translateX(8px); }
+  60% { transform: translateX(-6px); }
+  80% { transform: translateX(6px); }
+  100% { transform: translateX(0); }
+}
+.game-over {
+  animation: shake .6s ease both;
+  border-color: var(--gold) !important;
+}
+
+@media(max-width:600px){
+  .top-menu{ flex-direction: column; gap: 12px; }
+  .info-box{ flex-direction:column; gap:8px; padding:12px; }
+  .game-panel{ padding:20px; }
+  .layout{ padding:0 8%; gap:25px; }
+  canvas{ width:92%; height:92%; }
+}
+</style>
+</head>
+<body>
+
+<!-- ======= SIDE MENU ======= -->
+<div id="sideMenu">
+  <button class="menu-close" onclick="toggleMenu()">&times;</button>
+  <div class="menu-content">
+    <h2 class="menu-title">MENÜ</h2>
+    <a href="index.html" class="menu-item" onclick="toggleMenu()">🏠 Oyunlar</a>
+    <a href="OyunSlideri.html" class="menu-item" onclick="toggleMenu()">📊 Hakkında</a>
+    <a href="iletisim.html" class="menu-item" onclick="toggleMenu()">📞 İletişim</a>
+  </div>
+</div>
+
+<!-- Menu Overlay -->
+
+
+<!-- ======= NAVBAR ======= -->
+<div class="topbar">
+  <div class="top-left">
+    <div class="hamburger" onclick="toggleMenu()">
+      <div></div><div></div><div></div>
+    </div>
+    <h1 class="hero-title">🎮 Pika Yılan Oyunu </h1>
+  </div>
+</div>
+
+<div class="main-content">
+  <div class="top-menu">
+  </div>
+
+  <div class="info-box" role="status" aria-live="polite">
+    <div class="info-item"><strong>⭐</strong>Skor: <span id="scoreDisplay">0</span></div>
+    <div class="info-item"><strong>🏆</strong>Rekor: <span id="bestDisplay">0</span></div>
+    <div class="info-item"><strong>⏱️</strong>Süre: <span id="timeDisplay">0</span>s</div>
+  </div>
+
+  <div class="layout">
+    <div class="ad-container ad-left" aria-hidden="true">
+      <a href="https://www.pulibet137.com" target="_blank" rel="noopener">
+        <div class="ad-box"><img src="reklam3.jpeg" alt="reklam"></div>
+      </a>
+    </div>
+
+    <div class="game-panel" role="application" aria-label="Yılan Oyunu Paneli">
+      <div class="canvas-wrap" id="canvasWrap">
+        <canvas id="gameCanvas" width="600" height="600" aria-label="Oyun Ekranı"></canvas>
+      </div>
+
+      <div class="controls" role="region" aria-label="Oyun Kontrolleri">
+        <button class="btn" id="startBtn">▶️ BAŞLAT</button>
+        <button class="btn secondary" id="pauseBtn">⏸️ DURAKLAT</button>
+        <button class="btn secondary" id="resumeBtn">▶️ DEVAM</button>
+        <button class="btn negative" id="restartBtn">🔄 YENİDEN</button>
+      </div>
+
+      <div class="description" id="desc">
+        Yılanı <strong>yön tuşları veya WASD</strong> ile kontrol et. <br>
+        <strong>Her yem için 15 saniye süren var!</strong><br> 
+        Oyun alanı otomatik olarak ayarlanır ve hızlanır.
+      </div>
+    </div>
+
+    <div class="ad-container ad-right" aria-hidden="true">
+      <a href="https://www.pulibet137.com" target="_blank" rel="noopener">
+        <div class="ad-box"><img src="reklam3.jpeg" alt="reklam"></div>
+      </a>
+    </div>
+  </div>
+
+  <footer>© 2025 Pika Mini Arcade </footer>
+</div>
+
+<script>
+/* ======= FONKSİYONLAR ======= */
+function toggleMenu() {
+  document.getElementById("sideMenu").classList.toggle("open");
+}
+
+/* =========================
+   OYUN LOGİĞİ - DÜZELTİLDİ
+   ========================= */
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+
+const scoreDisplay = document.getElementById('scoreDisplay');
+const bestDisplay  = document.getElementById('bestDisplay');
+const timeDisplay  = document.getElementById('timeDisplay');
+
+const startBtn   = document.getElementById('startBtn');
+const pauseBtn   = document.getElementById('pauseBtn');
+const resumeBtn  = document.getElementById('resumeBtn');
+const restartBtn = document.getElementById('restartBtn');
+const canvasWrap = document.getElementById('canvasWrap');
+
+const TILE_SIZE = 24;
+let TILE = TILE_SIZE;
+let W = 600;
+let H = 600;
+let COLS = Math.floor(W / TILE);
+let ROWS = Math.floor(H / TILE);
+
+let snake = [];
+let dir = { x: 1, y: 0 };
+let food = null;
+let loopInterval = null;
+let tick = 120;
+let score = 0;
+let best = Number(localStorage.getItem('pika_best')) || 0;
+let seconds = 0;
+let timeInterval = null;
+let running = false;
+let paused = false;
+let dead = false;
+let foodTimer = null;
+
+bestDisplay.textContent = best;
+
+/* ====== OYUN EKRANI DÜZELTME ====== */
+function resizeCanvas() {
+    const rect = canvasWrap.getBoundingClientRect();
+    const styleWidth = rect.width - 30; // padding
+    const styleHeight = rect.height - 30;
+    
+    let size = Math.min(styleWidth, styleHeight);
+    let numTiles = Math.floor(size / TILE_SIZE);
+    numTiles = Math.max(20, Math.min(35, numTiles)); 
+
+    W = numTiles * TILE_SIZE;
+    H = numTiles * TILE_SIZE;
+    
+    canvas.width = W;
+    canvas.height = H;
+    canvas.style.width = '100%';
+    canvas.style.height = '100%';
+
+    COLS = numTiles;
+    ROWS = numTiles;
+
+    if (running || paused) {
+        render();
+    } else if (!dead) {
+        initialDraw();
+    }
+}
+
+window.addEventListener('resize', () => {
+    resizeCanvas();
+    if (running || paused) render();
+});
+
+/* ===========================
+   OYUN FONKSİYONLARI
+   =========================== */
+function randInt(max){ return Math.floor(Math.random()*max); }
+
+function triggerFoodTimeout() {
+    running = false; dead = true;
+    clearInterval(loopInterval);
+    clearInterval(timeInterval);
+    clearTimeout(foodTimer);
+
+    ctx.save();
+    ctx.fillStyle = 'rgba(0,0,0,0.85)';
+    ctx.fillRect(0,0,W,H);
+    ctx.fillStyle = '#ff6b6b';
+    ctx.shadowColor = '#ff6b6b';
+    ctx.shadowBlur = 15;
+    ctx.textAlign = 'center';
+    ctx.font = 'bold 36px Inter, Arial';
+    ctx.fillText('⏰ SÜRE DOLDU!', W/2, H/2 - 15);
+    ctx.font = 'bold 22px Inter, Arial';
+    ctx.shadowBlur = 0;
+    ctx.fillStyle = '#ffffff';
+    ctx.fillText('15 saniye içinde yemedin', W/2, H/2 + 20);
+    ctx.restore();
+
+    canvasWrap.classList.add('game-over');
+    setTimeout(()=> canvasWrap.classList.remove('game-over'), 800);
+}
+
+function initGame(){
+  snake = [{ x: Math.floor(COLS/2), y: Math.floor(ROWS/2) }];
+  dir = { x: 1, y: 0 };
+  score = 0; seconds = 0;
+  scoreDisplay.textContent = score;
+  timeDisplay.textContent = seconds;
+  running = true; paused = false; dead = false;
+  spawnFoodWithTimer();
+
+  clearInterval(loopInterval);
+  loopInterval = setInterval(gameTick, tick);
+
+  clearInterval(timeInterval);
+  timeInterval = setInterval(()=> {
+    if(running && !paused && !dead) {
+      seconds++;
+      timeDisplay.textContent = seconds;
+    }
+  }, 1000);
+
+  canvasWrap.classList.remove('game-over');
+  render();
+}
+
+function spawnFoodWithTimer(){
+  let tries = 0;
+  clearTimeout(foodTimer);
+
+  while(tries < 100){
+    const p = { x: randInt(COLS), y: randInt(ROWS) };
+    let collides = snake.some(s => s.x===p.x && s.y===p.y);
+    if(!collides){ food = p; break; }
+    tries++;
+  }
+  
+  foodTimer = setTimeout(() => {
+     if (running && !paused && !dead) {
+        triggerFoodTimeout();
+     }
+  }, 10000);
+}
+
+document.addEventListener('keydown', (e) => {
+  let newDir = null;
+  switch(e.key){
+    case 'ArrowUp':
+    case 'w': case 'W':
+      if(dir.y !== 1) newDir = {x:0,y:-1}; break;
+    case 'ArrowDown':
+    case 's': case 'S':
+      if(dir.y !== -1) newDir = {x:0,y:1}; break;
+    case 'ArrowLeft':
+    case 'a': case 'A':
+      if(dir.x !== 1) newDir = {x:-1,y:0}; break;
+    case 'ArrowRight':
+    case 'd': case 'D':
+      if(dir.x !== -1) newDir = {x:1,y:0}; break;
+    case ' ':
+      e.preventDefault();
+      if(!running) startBtnAction();
+      else if(paused) resumeAction();
+      else pauseAction();
+      break;
+  }
+  if(newDir && running && !paused && !dead){
+    dir = newDir;
+    e.preventDefault();
+  }
+});
+
+function gameTick(){
+  if(!running || paused || dead) return;
+  
+  const head = { x: snake[0].x + dir.x, y: snake[0].y + dir.y };
+
+  // Duvar kontrolü
+  if(head.x < 0 || head.x >= COLS || head.y < 0 || head.y >= ROWS){
+    return triggerGameOverWall();
+  }
+  
+  // Kendi kendine çarpma
+  if(snake.some(s => s.x===head.x && s.y===head.y)){
+    return triggerGameOverWall();
+  }
+
+  snake.unshift(head);
+
+  // Yem yeme
+  if(head.x === food.x && head.y === food.y){
+    score++;
+    scoreDisplay.textContent = score;
+    spawnFoodWithTimer();
+    
+    // Hız artışı
+    if(score % 5 === 0 && tick > 70){
+      tick = Math.max(70, tick - 15);
+      clearInterval(loopInterval);
+      loopInterval = setInterval(gameTick, tick);
+    }
+  } else {
+    snake.pop();
+  }
+
+  render();
+}
+
+function render(){
+  ctx.clearRect(0,0,W,H);
+
+  // Hafif gold grid
+  ctx.strokeStyle = 'rgba(255,215,0,0.08)';
+  ctx.lineWidth = 1;
+  for(let x=0; x<=W; x+=TILE){
+    ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,H); ctx.stroke();
+  }
+  for(let y=0; y<=H; y+=TILE){
+    ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(W,y); ctx.stroke();
+  }
+
+  // Pulsing gold yem
+  ctx.save();
+  const pulse = Math.sin(Date.now() / 300) * 0.3 + 0.7;
+  ctx.shadowColor = `rgba(255,215,0,${pulse})`;
+  ctx.shadowBlur = 12;
+  const goldGrad = ctx.createRadialGradient(
+    food.x*TILE + TILE/2, food.y*TILE + TILE/2, 0,
+    food.x*TILE + TILE/2, food.y*TILE + TILE/2, TILE/2
+  );
+  goldGrad.addColorStop(0, `rgba(255,255,255,${pulse})`);
+  goldGrad.addColorStop(1, '#ffd700');
+  ctx.fillStyle = goldGrad;
+  ctx.fillRect(food.x*TILE+2, food.y*TILE+2, TILE-4, TILE-4);
+  ctx.shadowBlur = 0;
+  ctx.restore();
+
+  // Yılan - neon green + gold glow
+  for(let i = snake.length - 1; i >= 0; i--){
+    const p = snake[i];
+    const x = p.x * TILE, y = p.y * TILE;
+
+    if(i===0){
+      // Baş - gold glow
+      ctx.save();
+      ctx.shadowColor = 'rgba(255,215,0,0.6)';
+      ctx.shadowBlur = 18;
+      const headGrad = ctx.createRadialGradient(x+TILE/2, y+TILE/2, 0, x+TILE/2, y+TILE/2, TILE/2);
+      headGrad.addColorStop(0,'#00ff88');
+      headGrad.addColorStop(0.7,'#00cc6a');
+      headGrad.addColorStop(1,'#00aa55');
+      ctx.fillStyle = headGrad;
+      ctx.fillRect(x+1,y+1,TILE-2,TILE-2);
+      ctx.shadowBlur = 0;
+      ctx.restore();
+    } else {
+      // Gövde
+      const alpha = 0.7 + (i/snake.length)*0.2;
+      ctx.fillStyle = `rgba(0, 200, 120, ${alpha})`;
+      ctx.shadowColor = `rgba(0, 255, 136, ${alpha*0.3})`;
+      ctx.shadowBlur = 6;
+      ctx.fillRect(x+2,y+2,TILE-4,TILE-4);
+      ctx.shadowBlur = 0;
+    }
+  }
+
+  if (paused) {
+    ctx.save();
+    ctx.fillStyle = 'rgba(0,0,0,0.8)';
+    ctx.fillRect(0, 0, W, H);
+    ctx.shadowColor = 'rgba(255,215,0,0.8)';
+    ctx.shadowBlur = 20;
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#ffd700';
+    ctx.font = 'bold 38px Inter, Arial';
+    ctx.fillText('⏸️ DURAKLATILDI', W / 2, H / 2);
+    ctx.shadowBlur = 0;
+    ctx.font = 'bold 22px Inter, Arial';
+    ctx.fillStyle = '#ffffff';
+    ctx.fillText('Boşluk tuşu ile devam et', W / 2, H / 2 + 30);
+    ctx.restore();
+  }
+}
+
+function triggerGameOver(message = 'OYUN BİTTİ!', subMessage = 'Yeniden başlat ile tekrar dene'){
+  dead = true; running = false;
+  clearInterval(loopInterval);
+  clearInterval(timeInterval);
+  clearTimeout(foodTimer);
+
+  ctx.save();
+  ctx.fillStyle = 'rgba(0,0,0,0.9)';
+  ctx.fillRect(0,0,W,H);
+  ctx.shadowColor = '#ffd700';
+  ctx.shadowBlur = 25;
+  ctx.fillStyle = '#ffd700';
+  ctx.font = 'bold 38px Inter, Arial';
+  ctx.textAlign = 'center';
+  ctx.fillText(message, W/2 , H/2 - 10);
+  ctx.shadowBlur = 0;
+  ctx.font = 'bold 22px Inter, Arial';
+  ctx.fillStyle = '#ffffff';
+  ctx.fillText(subMessage, W/2, H/2 + 25);
+  ctx.restore();
+
+  if(score > best){
+    best = score;
+    localStorage.setItem('pika_best', best);
+    bestDisplay.textContent = best;
+  }
+
+  canvasWrap.classList.add('game-over');
+  setTimeout(()=> canvasWrap.classList.remove('game-over'), 800);
+}
+
+function triggerGameOverWall() {
+    triggerGameOver('💥 OYUN BİTTİ!', 'Duvara veya kendine çarptın!');
+}
+
+function startBtnAction(){
+  if(!running && !paused && !dead){
+    initGame();
+  } else if(dead){
+    restartAction(); 
+  } else if(paused){
+    resumeAction();
+  } 
+}
+
+function pauseAction(){
+  if(!running || paused || dead) return;
+  paused = true;
+  clearTimeout(foodTimer); 
+  render();
+}
+
+function resumeAction(){
+  if(!running || !paused || dead) return;
+  paused = false;
+  spawnFoodWithTimer(); 
+  render();
+}
+
+function restartAction(){
+  clearInterval(loopInterval);
+  clearInterval(timeInterval);
+  clearTimeout(foodTimer); 
+  tick = 120;
+  resizeCanvas(); 
+  initGame(); 
+}
+
+// Event Listeners
+startBtn.addEventListener('click', startBtnAction);
+pauseBtn.addEventListener('click', pauseAction);
+resumeBtn.addEventListener('click', resumeAction);
+restartBtn.addEventListener('click', restartAction);
+
+function initialDraw(){
+  ctx.clearRect(0,0,W,H);
+  ctx.fillStyle = '#0a0a0a';
+  ctx.fillRect(0,0,W,H);
+  
+  // Hafif gold grid başlangıçta da
+  ctx.strokeStyle = 'rgba(255,215,0,0.1)';
+  ctx.lineWidth = 1;
+  for(let x=0; x<=W; x+=TILE){
+    ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,H); ctx.stroke();
+  }
+  for(let y=0; y<=H; y+=TILE){
+    ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(W,y); ctx.stroke();
+  }
+  
+  ctx.shadowColor = 'rgba(255,215,0,0.5)';
+  ctx.shadowBlur = 15;
+  ctx.fillStyle = '#ffd700';
+  ctx.font = 'bold 32px Inter, Arial';
+  ctx.textAlign = 'center';
+  ctx.fillText('▶️ BAŞLAT butonuna bas!', W/2, H/2);
+  ctx.shadowBlur = 0;
+}
+
+// Sayfa yüklendiğinde
+window.onload = function() {
+    resizeCanvas();
+    initialDraw();
+};
+</script>
+</body>
+</html>
